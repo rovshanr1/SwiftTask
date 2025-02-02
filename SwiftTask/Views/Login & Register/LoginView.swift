@@ -1,29 +1,32 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject  var viewModel = LoginViewModel()
     @Binding var showLoginScreen: Bool
     @FocusState private var isKeyboardActive: Bool
+    @State private var navigationToHome = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack{
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 
-                VStack{
-                    Spacer()
+                VStack {
+                    Spacer() 
                 }
                 
-                ScrollView{
+                ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        //Headline
+                        // Title
                         Text("Login")
                             .font(.system(size: 36))
                             .foregroundColor(.white)
-                            .padding(.bottom, 50)
+                            .padding(.bottom, 30)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
                         VStack(alignment: .leading, spacing: 10) {
-                            //Username TextField
+                            // Username
                             Text("Username")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
@@ -35,7 +38,9 @@ struct LoginView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.gray, lineWidth: 2)
                                 )
-                            //Password TextField
+                                .focused($isKeyboardActive) // Track keyboard status
+                            
+                            // Password
                             Text("Password")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
@@ -46,6 +51,7 @@ struct LoginView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.gray, lineWidth: 2)
                                 )
+                                .focused($isKeyboardActive)
                             
                             if let errorMessage = viewModel.error {
                                 Text(errorMessage)
@@ -56,15 +62,15 @@ struct LoginView: View {
                             }
                         }
                         
-                        VStack(spacing: 60) {
-                            //login button pressed
+                        VStack(spacing: 20) {
+                            // Login Button
                             Button(action: {
                                 if viewModel.email.isEmpty || viewModel.password.isEmpty {
                                     viewModel.error = "Email and password cannot be empty."
                                 } else {
                                     viewModel.login { success in
                                         if success {
-                                            print("Login successful!")
+                                            navigationToHome = true
                                         }
                                     }
                                 }
@@ -85,17 +91,22 @@ struct LoginView: View {
                             }
                             .disabled(viewModel.isLoading)
                             
+                            NavigationLink(destination: HomeView(context: PersistenceController.shared.viewContext), isActive: $navigationToHome){
+                                EmptyView()
+                            }
+                            // OR Divider
                             HStack {
                                 Rectangle()
                                     .frame(height: 1)
                                     .foregroundStyle(.gray)
                                 Text("or")
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(.gray)
                                 Rectangle()
                                     .frame(height: 1)
                                     .foregroundStyle(.gray)
                             }
                             
+                            // Google & Apple Login Buttons
                             VStack(spacing: 20) {
                                 Button(action: {
                                     print("Google Account logged in")
@@ -114,7 +125,7 @@ struct LoginView: View {
                                 Button(action: {
                                     print("Apple Account logged in")
                                 }) {
-                                    HStack{
+                                    HStack {
                                         Text("Login with Apple")
                                             .font(.headline)
                                             .frame(maxWidth: .infinity)
@@ -128,25 +139,33 @@ struct LoginView: View {
                                 }
                             }
                         }
+                        .padding(.top, 20)
                     }
                     .padding(.horizontal, 20)
                 }
-                .navigationBarBackButtonHidden(true)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
-                            showLoginScreen = false
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .font(.title2)
-                                .foregroundStyle(.white)
-                        }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onTapGesture {
+                    hideKeyboard() // Ekrana dokunulduğunda klavyeyi kapat
+                }
+            }
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showLoginScreen = false
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundColor(.white)
                     }
                 }
             }
         }
     }
 }
-#Preview {
-    LoginView(showLoginScreen: .constant(true))
-}
+
+
+
+//#Preview {
+//    LoginView(showLoginScreen: .constant(true))
+//}

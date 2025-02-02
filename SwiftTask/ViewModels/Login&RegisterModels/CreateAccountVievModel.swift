@@ -22,34 +22,24 @@ class CreateAccountViewModel: ObservableObject{
         self.authService = authService
     }
     func createAccount(completion: @escaping (Bool) -> Void){
-        
-        //check password
-        guard password == confirmPassword else {
-            isLoading = false
-            errorMessage = "Password does not match"
-            completion(false)
-            return
-        }
-        
         isAccountCreated = true
         errorMessage = nil
         authService.createAccount(email: email, password: password) { [weak self] result in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                switch result{
-                case .success:
-                    completion(true)
-                    self?.isAccountCreated = true
-                case .failure(let error):
-                    self?.errorMessage = error.localizedDescription
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2)  {
+                if self?.password != self?.confirmPassword {
+                    self?.errorMessage = "Passwords do not match"
+                    self?.isLoading = false
                     completion(false)
+                    return
                 }
                 
+                self?.isLoading = false 
+                            completion(true)
             }
             
             
-            }
         }
     }
-    
+}
+
 

@@ -4,6 +4,7 @@ struct CreateAccountView: View {
     @StateObject private var viewModel = CreateAccountViewModel()
     @Binding var showRegisterScreen: Bool
     @FocusState private var isKeyboardActive: Bool // Monitor keyboard status
+    @State private var navigateToLogin = false
 
     var body: some View {
         NavigationView {
@@ -75,14 +76,21 @@ struct CreateAccountView: View {
                         }
                         
                         VStack(spacing: 20) {
-                            // Register Button
+                            
                             Button(action: {
                                 if viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty {
                                     viewModel.errorMessage = "All fields are required"
                                 } else {
+                                    viewModel.isLoading = true
                                     viewModel.createAccount { success in
+                                        DispatchQueue.main.async {
+                                            navigateToLogin = true
+                                        }
                                         if success {
-                                            print("Login successful!")
+                                            print("Register successful!")
+                                            showRegisterScreen = false
+                                        }else{
+                                            viewModel.errorMessage = "Registration failed. Try again."
                                         }
                                     }
                                 }
@@ -102,7 +110,7 @@ struct CreateAccountView: View {
                                 }
                             }
                             .disabled(viewModel.isLoading)
-                            
+                           
                             // OR Divider
                             HStack {
                                 Rectangle()
@@ -180,6 +188,6 @@ extension View {
     }
 }
 
-#Preview {
-    CreateAccountView(showRegisterScreen: .constant(true))
-}
+//#Preview {
+//    CreateAccountView(showRegisterScreen: .constant(true))
+//}

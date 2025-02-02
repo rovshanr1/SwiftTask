@@ -41,19 +41,5 @@ class LoginViewModel: ObservableObject {
     }
 }
     
-//    func loginWithGoogle(complation: @escaping(Bool) -> Void){
-//        isLoading = true
-//        authService.loginWithGoogle{ [weak self] result in
-//            DispatchQueue.main.async{
-//                self?.isLoading = false
-//                switch result {
-//                case .success:
-//                    complation(true)
-//                case .failure(let error):
-//                    self?.error = error.localizedDescription
-//                    complation(false)
-//                }
-//            }
-//        }
-//    }
-//}
+
+

@@ -88,6 +88,6 @@ struct StartScreenView: View {
     }
 }
 
-#Preview {
-    IntroView()
-}
+//#Preview {
+//    IntroView()
+//}
