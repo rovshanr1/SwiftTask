@@ -1,0 +1,25 @@
+# Xcode
+.DS_Store
+build/
+DerivedData/
+.idea/
+*.xcworkspace
+*.xcodeproj/project.xcworkspace
+*.xccheckout
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+
+# Swift
+.build/
+*.swiftpm/xcode/package.xcworkspace
+
+# Pods
+Pods/
+
+# Personal files
+GoogleService-Info.plist
+
+# Other
+*.env
+config.json
+
