@@ -1,12 +1,5 @@
-//
-//  AuthServices.swift
-//  SwiftTask
-//
-//  Created by Rovshan Rasulov on 27.01.25.
-//
 import Foundation
 import FirebaseAuth
-
 
 protocol AuthServiceProtocol {
     func login(email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void)
@@ -27,13 +20,32 @@ class AuthService: AuthServiceProtocol {
     }
     
     func createAccount(email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        Auth.auth().createUser(withEmail: email, password: password) { _, error in
+        Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
+            guard self != nil else {
+                completion(.failure(NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Weak self reference failure"])))
+                return
+            }
+            
             if let error = error {
                 completion(.failure(error))
-            } else {
-                completion(.success(()))
+                return
+            }
+            
+            guard let user = authResult?.user else {
+                completion(.failure(NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "User creation failed"])))
+                return
+            }
+            
+            let profile = ProfileModel(userName: "New User", taskLeft: 0, taskDone: 0, email: email)
+            
+            // Save the user's profile to Firestore
+            UserService.shared.saveUserProfile(userID: user.uid, profile: profile) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
             }
         }
     }
-
 }

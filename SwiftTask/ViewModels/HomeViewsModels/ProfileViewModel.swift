@@ -29,15 +29,14 @@ class ProfileViewModel: ObservableObject {
     func fetchUserData() {
         isLoading = true
         guard let userID = Auth.auth().currentUser?.uid else { return }
-        
-        // Önce Core Data'dan çek
+ 
         if let cachedProfile = CoreDataManager.shared.fetchUserProfile(userId: userID) {
             DispatchQueue.main.async {
                 self.user = cachedProfile
             }
         }
         
-        // Sonra Firestore'dan çek
+       
         UserService.shared.fetchUserProfile(userID: userID) { profile in
             DispatchQueue.main.async {
                 if let profile = profile {

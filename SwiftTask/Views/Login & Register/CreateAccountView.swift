@@ -25,7 +25,7 @@ struct CreateAccountView: View {
                 
                 ScrollView { // Allows content to scroll when keyboard is opened
                     VStack(alignment: .leading, spacing: 20) {
-                        // Başlık
+                        // Header
                         Text("Register")
                             .font(.system(size: 36))
                             .foregroundColor(.white)

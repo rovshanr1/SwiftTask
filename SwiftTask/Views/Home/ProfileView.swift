@@ -23,6 +23,14 @@ struct ProfileView: View {
                     )
                 }
                 .navigationBarBackButtonHidden(true)
+                .toolbar{
+                    ToolbarItem(placement: .principal){
+                        Text("Profile")
+                            .font(.title)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                }
             }
             .navigationDestination(isPresented: $navigateToHome) {
                 HomeView(context: PersistenceController.shared.viewContext)
@@ -64,9 +72,6 @@ struct ProfileView: View {
                         Text(user.userName)
                             .font(.title)
                             .foregroundColor(.white)
-                        Text(user.email)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
 
                         // Task Stats
                         HStack(spacing: 20) {
@@ -78,6 +83,12 @@ struct ProfileView: View {
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
+                            .padding()
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray, lineWidth: 2)
+                            )
+                            
                             VStack {
                                 Text("\(user.taskLeft)")
                                     .font(.title2)
@@ -86,6 +97,11 @@ struct ProfileView: View {
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
+                            .padding()
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray, lineWidth: 2)
+                            )
                         }
                     } else {
                         VStack(spacing: 20){
