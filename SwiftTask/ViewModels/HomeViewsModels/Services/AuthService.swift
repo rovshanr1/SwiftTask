@@ -6,14 +6,11 @@
 //
 import Foundation
 import FirebaseAuth
-//import GoogleSignIn
-//import GoogleSignInSwift
-//import AuthenticationServices
+
 
 protocol AuthServiceProtocol {
     func login(email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void)
     func createAccount(email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void)
-//    func loginWithGoogle(completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 class AuthService: AuthServiceProtocol {
@@ -38,8 +35,5 @@ class AuthService: AuthServiceProtocol {
             }
         }
     }
-//
-//    func loginWithGoogle(completion: @escaping (Result<Void, Error>) -> Void) {
-//        //
-//    }
+
 }

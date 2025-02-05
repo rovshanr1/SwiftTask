@@ -10,39 +10,44 @@ class HomeViewModel: ObservableObject {
         fetchItems()
     }
     
+    func saveContext() {
+        do {
+            try context.save()
+            fetchItems()
+        } catch {
+            print("Core Data save error: \(error.localizedDescription)")
+        }
+    }
+    
     func fetchItems() {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
         do {
             items = try context.fetch(request)
         } catch {
-            print("Veri çekme hatası: \(error.localizedDescription)")
+            print("Fetch items error: \(error.localizedDescription)")
         }
     }
     
-    func addTask(title: String, description: String) {
+    func addTask(title: String, description: String, date: Date?) {
         let newItem = Item(context: context)
         newItem.title = title
         newItem.taskDescription = description
+        newItem.date = date ?? Date() 
         newItem.id = UUID()
-        newItem.date = Date()
-        
-        do {
-            try context.save()
-            fetchItems()
-        } catch {
-            print("Add new task error: \(error.localizedDescription)")
-        }
+        saveContext()
     }
     
     func deleteSingleTask(_ item: Item) {
         context.delete(item)
-        do {
-            try context.save()
-            fetchItems()
-        } catch {
-            print("Delete Error: \(error.localizedDescription)")
-        }
+        saveContext()
+    }
+    
+    func editTask(item: Item, newTitle: String, newDescription: String) {
+        item.title = newTitle
+        item.taskDescription = newDescription
+        saveContext()
     }
 }
+
 

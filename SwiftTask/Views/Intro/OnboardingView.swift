@@ -41,7 +41,7 @@ struct OnboardingView: View {
                             }
                             .frame(width: 200, height: 44)
                             .foregroundColor(.white)
-                            .background(Color(red: 0.53, green: 0.53, blue: 0.91))
+                            .background(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .cornerRadius(10)
                             .padding(.top, 20)
                                      }

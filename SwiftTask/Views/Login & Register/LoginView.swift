@@ -6,6 +6,13 @@ struct LoginView: View {
     @FocusState private var isKeyboardActive: Bool
     @State private var navigationToHome = false
     
+    // Define the global gradient once
+        let globalGradient = LinearGradient(
+            gradient: Gradient(colors: [Color(red: 1.00, green: 0.44, blue: 0.14), Color(red: 0.29, green: 0.29, blue: 0.51)]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    
     var body: some View {
         NavigationStack{
             ZStack {
@@ -85,7 +92,7 @@ struct LoginView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding()
                                         .foregroundStyle(.white)
-                                        .background(Color(red: 0.53, green: 0.53, blue: 0.91))
+                                        .background(globalGradient)
                                         .cornerRadius(10)
                                 }
                             }
@@ -118,7 +125,7 @@ struct LoginView: View {
                                         .foregroundStyle(.white)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(red: 0.53, green: 0.53, blue: 0.91), lineWidth: 2)
+                                                .stroke(globalGradient, lineWidth: 2)
                                         )
                                 }
                                 
@@ -133,7 +140,7 @@ struct LoginView: View {
                                             .foregroundStyle(.white)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 10)
-                                                    .stroke(Color(red: 0.53, green: 0.53, blue: 0.91), lineWidth: 2)
+                                                    .stroke(globalGradient, lineWidth: 2)
                                             )
                                     }
                                 }
@@ -145,7 +152,7 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onTapGesture {
-                    hideKeyboard() // Ekrana dokunulduğunda klavyeyi kapat
+                    hideKeyboard() 
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -166,6 +173,6 @@ struct LoginView: View {
 
 
 
-//#Preview {
-//    LoginView(showLoginScreen: .constant(true))
-//}
+#Preview {
+    LoginView(showLoginScreen: .constant(true))
+}

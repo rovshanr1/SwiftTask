@@ -15,7 +15,6 @@ struct IntroView: View {
     @State private var showRegisterScreen = false
     var body: some View {
         ZStack {
-            
             if isOnboardingSheetShowing {
                 OnboardingView(viewModel: viewModel) {
                     withAnimation {
@@ -59,26 +58,30 @@ struct StartScreenView: View {
                 Spacer()
                 
                 VStack(spacing: 30) {
-                    Button("Login") {
+                    Button(action: {
                         print("Login pressed")
                         showLoginScreen = true
+                    }){
+                        Text("Create Account")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
                     .foregroundColor(.white)
-                    .background(Color(red: 0.53, green: 0.53, blue: 0.91))
+                    .background(Color(red: 1.00, green: 0.44, blue: 0.14))
                     .cornerRadius(10)
                     
-                    Button("Create Account") {
+                    Button(action: {
                         print("Create account pressed")
                         showRegisterScreen = true
+                    }){
+                        Text("Create Account")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
                     .foregroundColor(.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(red: 0.53, green: 0.53, blue: 0.91), lineWidth: 2)
+                            .stroke(Color(red: 1.00, green: 0.44, blue: 0.14), lineWidth: 2)
                     )
                 }
             }
@@ -88,6 +91,6 @@ struct StartScreenView: View {
     }
 }
 
-//#Preview {
-//    IntroView()
-//}
+#Preview {
+    IntroView()
+}

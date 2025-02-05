@@ -16,8 +16,7 @@ struct AddTaskSheet: View {
                     .font(.title2)
                     .bold()
                     .foregroundStyle(.white)
-                    .padding(.horizontal)
-                TextField("Task title", text: $title)
+                TextField("Task title", text: $title, prompt: Text("TextTitle").foregroundStyle(.gray))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -26,7 +25,7 @@ struct AddTaskSheet: View {
                             .stroke(Color(.gray), lineWidth: 2)
                     )
                 
-                TextField("Description", text: $description)
+                TextField("Description", text: $description, prompt: Text("Description").foregroundStyle(.gray))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -36,18 +35,6 @@ struct AddTaskSheet: View {
                     )
                 
                 HStack {
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        Text("Cancel")
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-                    
                     Button(action: {
                         onSave()
                         isPresented = false
@@ -61,6 +48,7 @@ struct AddTaskSheet: View {
                     }
                     .padding(.horizontal)
                 }
+                Spacer()
             }
             .padding()
             .background(Color(red: 0.21, green: 0.21, blue: 0.21))

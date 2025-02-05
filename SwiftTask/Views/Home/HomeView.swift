@@ -6,8 +6,11 @@ struct HomeView: View {
     @State private var showingSheet = false
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
+    @State private var newDate = Date()
     @State private var showingDeleteAlert = false
     @State private var itemToDelete: Item?
+    @State private var navigateToHome = false
+    @State private var navigateToProfile = false
     
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: HomeViewModel(context: context))
@@ -22,7 +25,11 @@ struct HomeView: View {
                     Spacer()
                     taskListView()
                     Spacer()
-                    tabBarView()
+                    TabBarView(
+                        navigateToHome: .constant(false),
+                        navigateToProfile: $navigateToProfile,
+                        onAddTask: {showingSheet = true}
+                    )
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -46,8 +53,12 @@ struct HomeView: View {
             } message: {
                 Text("This task will be permanently deleted.")
             }
+            .navigationDestination(isPresented: $navigateToProfile) {
+                           ProfileView()
+                       }
         }
     }
+
     
     @ViewBuilder
     private func taskListView() -> some View {
@@ -57,7 +68,13 @@ struct HomeView: View {
             } else {
                 VStack {
                     ForEach(viewModel.items) { item in
-                        TaskRow(item: item, onDelete: { showDeleteAlert(for: item) })
+                        TaskRow(
+                            item: item,
+                            onDelete: { showDeleteAlert(for: item) },
+                            onEdit: { editedItem, newTitle, newDescription in
+                                viewModel.editTask(item: editedItem, newTitle: newTitle, newDescription: newDescription)
+                            }
+                        )
                     }
                 }
             }
@@ -66,9 +83,10 @@ struct HomeView: View {
     
     private func saveTask() {
         if !newTaskTitle.isEmpty {
-            viewModel.addTask(title: newTaskTitle, description: newTaskDescription)
+            viewModel.addTask(title: newTaskTitle, description: newTaskDescription, date: newDate)
             newTaskTitle = ""
             newTaskDescription = ""
+            newDate = Date()
         }
     }
     
@@ -76,52 +94,18 @@ struct HomeView: View {
         itemToDelete = item
         showingDeleteAlert = true
     }
-    @ViewBuilder
-    private func tabBarView() -> some View {
-        ZStack {
-            HStack {
-                HStack(spacing: 50) {
-                    Button(action: {}) {
-                        Image(systemName: "house")
-                            .foregroundStyle(.white)
-                        
-                    }
-                    Button(action: {}) {
-                        Image(systemName: "calendar")
-                        .foregroundStyle(.white)}
-                }
-                .padding(.leading, 20)
-                Spacer()
-                HStack(spacing: 50) {
-                    
-                    Button(action: {}) {
-                        Image(systemName: "clock")
-                        .foregroundStyle(.white)}
-                    Button(action: {}) {
-                        Image(systemName: "person")
-                        .foregroundStyle(.white)}
-                }
-                .padding(.trailing, 20)
-            }
-            .frame(height: 70)
-            .background(Color(red: 0.21, green: 0.21, blue: 0.21).opacity(0.8))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .padding(.horizontal, 16)
-            
-            Button(action: { showingSheet = true }) {
-                Circle()
-                    .frame(width: 64, height: 64)
-                    .foregroundColor(.purple)
-                    .overlay(Image(systemName: "plus").font(.system(size: 32, weight: .bold)).foregroundColor(.white))
-            }
-            .offset(y: -30)
-        }
-    }
+
 }
 
 struct TaskRow: View {
     let item: Item
     var onDelete: () -> Void
+    var onEdit: (Item, String, String) -> Void
+    
+    @State private var isDescriptionVisible = false
+    @State private var isEditing = false
+    @State private var editedTitle = ""
+    @State private var editedDescription = ""
     
     var body: some View {
         HStack {
@@ -129,9 +113,17 @@ struct TaskRow: View {
                 Text(item.title ?? "Unnamed Task")
                     .font(.headline)
                     .foregroundColor(.white)
-                Text(item.taskDescription ?? "")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                if let date = item.date {
+                    Text(formattedDate(date))
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                if isDescriptionVisible, let description = item.taskDescription, !description.isEmpty {
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .transition(.opacity)
+                }
             }
             Spacer()
         }
@@ -139,8 +131,42 @@ struct TaskRow: View {
         .background(Color.gray.opacity(0.2))
         .cornerRadius(10)
         .padding(.horizontal)
-        .contextMenu { Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") } }
+        .contextMenu {
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete", systemImage: "trash")
+            }
+            Button(action: {
+                // Edit moduna geç
+                editedTitle = item.title ?? ""
+                editedDescription = item.taskDescription ?? ""
+                isEditing = true
+            }) {
+                Label("Edit", systemImage: "pencil")
+            }
+        }
+        .onTapGesture {
+            withAnimation {
+                isDescriptionVisible.toggle()
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            EditTaskSheet(
+                isPresented: $isEditing,
+                title: $editedTitle,
+                description: $editedDescription,
+                onSave: {
+                    onEdit(item, editedTitle, editedDescription)
+                    isEditing = false
+                }
+            )
+        }
     }
+}
+
+private func formattedDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "dd MMM yyyy"
+    return formatter.string(from: date)
 }
 
 struct EmptyTaskView: View {

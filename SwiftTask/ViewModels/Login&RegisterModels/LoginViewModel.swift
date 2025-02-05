@@ -16,6 +16,7 @@ class LoginViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
     
     
+    
     private let authService: AuthServiceProtocol
     
     init(authService: AuthServiceProtocol = AuthService.shared) {

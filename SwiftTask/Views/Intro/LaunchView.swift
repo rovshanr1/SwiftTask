@@ -1,20 +1,19 @@
-//
-//  LaunchView.swift
-//  SwiftTask
-//
-//  Created by Rovshan Rasulov on 25.01.25.
-//
-
 import SwiftUI
+import FirebaseAuth
 
 struct LaunchView: View {
     @State private var logoScale: CGFloat = 0.5
     @State private var logoOpacity: Double = 0.0
     @State private var isMainScreenActive: Bool = false
-    
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+
     var body: some View {
         if isMainScreenActive {
-            IntroView()
+            if isLoggedIn {
+                HomeView(context: PersistenceController.shared.viewContext)
+            } else {
+                IntroView()
+            }
         } else {
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
@@ -27,22 +26,30 @@ struct LaunchView: View {
                         .scaleEffect(logoScale)
                         .opacity(logoOpacity)
                         .onAppear {
+                            checkUserStatus()
                             withAnimation(.easeOut(duration: 1.0)) {
                                 logoScale = 1.0
                                 logoOpacity = 1.0
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                withAnimation {
-                                    isMainScreenActive = true
-                                }
                             }
                         }
                 }
             }
         }
     }
+    
+    private func checkUserStatus() {
+        if Auth.auth().currentUser != nil {
+            isLoggedIn = true
+        } else {
+            isLoggedIn = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                isMainScreenActive = true
+            }
+        }
+    }
 }
-
 
 #Preview {
     LaunchView()
