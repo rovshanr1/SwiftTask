@@ -62,7 +62,7 @@ struct StartScreenView: View {
                         print("Login pressed")
                         showLoginScreen = true
                     }){
-                        Text("Create Account")
+                        Text("Login")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()

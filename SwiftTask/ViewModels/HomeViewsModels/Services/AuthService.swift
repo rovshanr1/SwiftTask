@@ -36,9 +36,12 @@ class AuthService: AuthServiceProtocol {
                 return
             }
             
-            let profile = ProfileModel(userName: "New User", taskLeft: 0, taskDone: 0, email: email)
+            //Create username from user's email address
+            let username = email.components(separatedBy: "@").first ?? "User"
             
-            // Save the user's profile to Firestore
+            let profile = ProfileModel(userName: username, taskLeft: 0, taskDone: 0, email: email)
+            
+            //Save user to Firestore
             UserService.shared.saveUserProfile(userID: user.uid, profile: profile) { error in
                 if let error = error {
                     completion(.failure(error))

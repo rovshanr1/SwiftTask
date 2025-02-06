@@ -77,7 +77,10 @@ struct LoginView: View {
                                 } else {
                                     viewModel.login { success in
                                         if success {
-                                            navigationToHome = true
+                                            DispatchQueue.main.async {
+                                                navigationToHome = true
+                                            }
+                                           
                                         }
                                     }
                                 }
@@ -98,9 +101,7 @@ struct LoginView: View {
                             }
                             .disabled(viewModel.isLoading)
                             
-                            NavigationLink(destination: HomeView(context: PersistenceController.shared.viewContext), isActive: $navigationToHome){
-                                EmptyView()
-                            }
+                          
                             // OR Divider
                             HStack {
                                 Rectangle()
@@ -166,12 +167,18 @@ struct LoginView: View {
                             .foregroundColor(.white)
                     }
                 }
+            
             }
+            .navigationDestination(isPresented: $navigationToHome) {
+                    HomeView(context: PersistenceController.shared.viewContext)}
+
         }
     }
 }
 
-
+//NavigationLink(destination: HomeView(context: PersistenceController.shared.viewContext), isActive: $navigationToHome){
+//    EmptyView()
+//}
 
 #Preview {
     LoginView(showLoginScreen: .constant(true))

@@ -44,7 +44,7 @@ struct AddTaskSheet: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.purple)
-                            .cornerRadius(10)
+                            .cornerRadius(5)
                     }
                     .padding(.horizontal)
                 }

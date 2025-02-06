@@ -21,6 +21,8 @@ class ProfileViewModel: ObservableObject {
         }
     }
     
+    
+    
     init() {
         fetchUserData()
         fetchProfileImage()
