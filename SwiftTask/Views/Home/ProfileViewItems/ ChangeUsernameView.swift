@@ -21,11 +21,13 @@ struct ChangeUsernameView: View {
                 .padding(8)
             
             TextField("Enter your new username", text: $newUserName)
-                .foregroundColor(.white)
-                .frame(width: 287, height: 43)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(.gray), lineWidth: 2)
+                )
 
             HStack(spacing: 20) {
                 Button(action: {

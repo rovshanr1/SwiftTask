@@ -23,8 +23,6 @@ class ProfileViewModel: ObservableObject {
    
     private let context = PersistenceController.shared.viewContext
     
-    
-    
     init() {
         fetchUserData()
         fetchProfileImage()
@@ -135,8 +133,7 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
-
-
+    
     func logout() {
         try? Auth.auth().signOut()
         DispatchQueue.main.async {

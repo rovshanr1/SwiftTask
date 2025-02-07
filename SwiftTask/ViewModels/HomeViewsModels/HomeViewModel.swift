@@ -3,6 +3,12 @@ import SwiftUI
 
 class HomeViewModel: ObservableObject {
     @Published var items: [Item] = []
+    @Published var completedTasks: [Item] = []
+    @Published var newItems: [Item] = []
+    @Published var isTodayExpanded = true
+    @Published var isCompletedExpanded = true
+    @Published var isLoading: Bool = false
+    
     private let context: NSManagedObjectContext
     
     init(context: NSManagedObjectContext) {
@@ -10,20 +16,13 @@ class HomeViewModel: ObservableObject {
         fetchItems()
     }
     
-    func saveContext() {
-        do {
-            try context.save()
-            fetchItems()
-        } catch {
-            print("Core Data save error: \(error.localizedDescription)")
-        }
-    }
-    
     func fetchItems() {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
         do {
             items = try context.fetch(request)
+            newItems = items.filter { !$0.completed }
+            completedTasks = items.filter { $0.completed }
         } catch {
             print("Fetch items error: \(error.localizedDescription)")
         }
@@ -33,8 +32,9 @@ class HomeViewModel: ObservableObject {
         let newItem = Item(context: context)
         newItem.title = title
         newItem.taskDescription = description
-        newItem.date = date ?? Date() 
+        newItem.date = date ?? Date()
         newItem.id = UUID()
+        newItem.completed = false
         saveContext()
     }
     
@@ -48,6 +48,18 @@ class HomeViewModel: ObservableObject {
         item.taskDescription = newDescription
         saveContext()
     }
+    
+    func toggleTaskCompletion(_ item: Item) {
+        item.completed.toggle()
+        saveContext()
+    }
+    
+    private func saveContext() {
+        do {
+            try context.save()
+            fetchItems()
+        } catch {
+            print("Core Data save error: \(error.localizedDescription)")
+        }
+    }
 }
-
-

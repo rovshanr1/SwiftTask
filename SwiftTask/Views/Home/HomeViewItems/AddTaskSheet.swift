@@ -7,15 +7,15 @@ struct AddTaskSheet: View {
     var onSave: () -> Void
     
     var body: some View {
-        ZStack{
-            Color(red: 0.21, green: 0.21, blue: 0.21)
-                .ignoresSafeArea()
-            
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(spacing: 20) {
                 Text("Add Task")
                     .font(.title2)
                     .bold()
                     .foregroundStyle(.white)
+                
+                Divider().background(Color.gray)
+                    .padding(8)
+                
                 TextField("Task title", text: $title, prompt: Text("TextTitle").foregroundStyle(.gray))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -36,26 +36,32 @@ struct AddTaskSheet: View {
                 
                 HStack {
                     Button(action: {
+                        isPresented = false
+                    }) {
+                        Text("Cancel")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 153, height: 48)
+                    }
+                    
+                    Button(action: {
                         onSave()
                         isPresented = false
                     }) {
                         Text("Save")
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.purple)
+                            .foregroundStyle(.white)
+                            .frame(width: 153, height: 48)
+                            .background(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .cornerRadius(5)
                     }
                     .padding(.horizontal)
                 }
-                Spacer()
+             
             }
+            .cornerRadius(15)
             .padding()
-            .background(Color(red: 0.21, green: 0.21, blue: 0.21))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
             .presentationDetents([.medium, .large])
         }
     }
-}
+
  
 
