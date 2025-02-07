@@ -15,10 +15,11 @@ struct ChangeUsernameView: View {
         VStack(spacing: 20) {
             Text("Change Username")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
 
             Divider().background(Color.gray)
                 .padding(8)
+            
             TextField("Enter your new username", text: $newUserName)
                 .foregroundColor(.white)
                 .frame(width: 287, height: 43)

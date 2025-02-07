@@ -7,8 +7,11 @@ struct ProfileView: View {
     @State private var navigateToProfile = false
     @State private var navigateToIntroView = false
     @State private var showingCustomModal = false
-    @State private var newUserName = ""
     @State private var userNameChanged = false
+    @State private var showImagePicker = false
+    @State private var showChangePasswordView = false
+    @State private var newUserName = ""
+
    
     var body: some View {
         NavigationStack {
@@ -144,6 +147,7 @@ struct ProfileView: View {
                             
                             // Change image button
                             Button(action: {
+                                showImagePicker = true
                             }){
                                 HStack {
                                     Image("camera")
@@ -151,16 +155,22 @@ struct ProfileView: View {
                                     Text("Change account Image")
                                         .foregroundStyle(.white)
                                 }
+                            }.sheet(isPresented: $showImagePicker) {
+                                ChangeProfileImageView(viewModel: viewModel)
                             }
    
                             //Change password button
-                            Button(action:{}){
+                            Button(action:{
+                                showChangePasswordView = true
+                            }){
                                 HStack{
                                     Image("key")
                                         .frame(width: 24, height: 24)
                                     Text("Change account password")
                                         .foregroundStyle(.white)
                                 }
+                            }.sheet(isPresented: $showChangePasswordView) {
+                                ChangePasswordView(viewModel: viewModel)
                             }
                             
                         }
@@ -193,6 +203,6 @@ struct ProfileView: View {
     }
 }
 
-//#Preview {
-//    ProfileView()
-//}
+#Preview {
+    ProfileView()
+}

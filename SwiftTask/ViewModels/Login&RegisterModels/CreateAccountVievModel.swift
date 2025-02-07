@@ -36,8 +36,6 @@ class CreateAccountViewModel: ObservableObject{
                 self?.isLoading = false 
                             completion(true)
             }
-            
-            
         }
     }
 }

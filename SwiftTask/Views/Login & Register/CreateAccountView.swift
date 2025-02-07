@@ -172,7 +172,7 @@ struct CreateAccountView: View {
                     hideKeyboard() // Close keyboard when screen is touched
                 }
             }
-            .navigationBarBackButtonHidden(true)
+//            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
@@ -195,6 +195,6 @@ extension View {
     }
 }
 
-#Preview {
-    CreateAccountView(showRegisterScreen: .constant(true))
-}
+//#Preview {
+//    CreateAccountView(showRegisterScreen: .constant(true))
+//}

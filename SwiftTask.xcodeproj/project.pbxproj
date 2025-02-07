@@ -17,9 +17,22 @@
 		44E960782D455E2E00C7BA6F /* SwiftTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		447BB92E2D5577060004B939 /* Exceptions for "SwiftTask" folder in "SwiftTask" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 44E960772D455E2E00C7BA6F /* SwiftTask */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		44E9607A2D455E2E00C7BA6F /* SwiftTask */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				447BB92E2D5577060004B939 /* Exceptions for "SwiftTask" folder in "SwiftTask" target */,
+			);
 			path = SwiftTask;
 			sourceTree = "<group>";
 		};
@@ -280,7 +293,7 @@
 				DEVELOPMENT_TEAM = 2Z3JZRB82A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = SwiftTask/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -310,7 +323,7 @@
 				DEVELOPMENT_TEAM = 2Z3JZRB82A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = SwiftTask/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

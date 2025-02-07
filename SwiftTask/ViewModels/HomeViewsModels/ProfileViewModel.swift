@@ -20,6 +20,8 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
+   
+    private let context = PersistenceController.shared.viewContext
     
     
     
@@ -95,6 +97,45 @@ class ProfileViewModel: ObservableObject {
             self.profileImageData = imageData
         }
     }
+    
+    func updateProfileImage(_ image: UIImage) {
+        DispatchQueue.global(qos: .background).async {
+            if let imageData = image.jpegData(compressionQuality: 0.5) {
+                CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: imageData)
+
+                DispatchQueue.main.async {
+                    self.profileImageData = imageData
+                }
+            }
+        }
+    }
+    
+    func changePassword(currentPassword: String, newPassword: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let user = Auth.auth().currentUser, let email = user.email else {
+            completion(false, "User not found.")
+            return
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+
+        //Authenticate the user again
+        user.reauthenticate(with: credential) { _, error in
+            if error != nil {
+                completion(false, "Current password is incorrect.")
+                return
+            }
+
+            //Update new password
+            user.updatePassword(to: newPassword) { error in
+                if let error = error {
+                    completion(false, error.localizedDescription)
+                } else {
+                    completion(true, nil)
+                }
+            }
+        }
+    }
+
 
     func logout() {
         try? Auth.auth().signOut()

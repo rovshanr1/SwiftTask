@@ -136,7 +136,7 @@ struct TaskRow: View {
                 Label("Delete", systemImage: "trash")
             }
             Button(action: {
-                // Edit moduna geç
+                // Switch to edit mode
                 editedTitle = item.title ?? ""
                 editedDescription = item.taskDescription ?? ""
                 isEditing = true
