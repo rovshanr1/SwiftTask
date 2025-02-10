@@ -34,10 +34,11 @@ struct LoginView: View {
                         
                         VStack(alignment: .leading, spacing: 10) {
                             // Username
-                            Text("Username")
+                            Text("Email")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
-                            TextField("Enter your Username", text: $viewModel.email)
+                            TextField("Enter your email", text: $viewModel.email)
+                                .keyboardType(.emailAddress)
                                 .padding()
                                 .autocapitalization(.none)
                                 .foregroundStyle(.white)
@@ -76,11 +77,12 @@ struct LoginView: View {
                                     viewModel.error = "Email and password cannot be empty."
                                 } else {
                                     viewModel.login { success in
-                                        if success {
-                                            DispatchQueue.main.async {
+                                        DispatchQueue.main.async {
+                                            if success {
                                                 navigationToHome = true
+                                            } else {
+                                                viewModel.error = "Login failed. Please check your credentials."
                                             }
-                                           
                                         }
                                     }
                                 }
@@ -101,51 +103,6 @@ struct LoginView: View {
                             }
                             .disabled(viewModel.isLoading)
                             
-                          
-                            // OR Divider
-                            HStack {
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundStyle(.gray)
-                                Text("or")
-                                    .foregroundStyle(.gray)
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundStyle(.gray)
-                            }
-                            
-                            // Google & Apple Login Buttons
-                            VStack(spacing: 20) {
-                                Button(action: {
-                                    print("Google Account logged in")
-                                }) {
-                                    Text("Login with Google")
-                                        .font(.headline)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(globalGradient, lineWidth: 2)
-                                        )
-                                }
-                                
-                                Button(action: {
-                                    print("Apple Account logged in")
-                                }) {
-                                    HStack {
-                                        Text("Login with Apple")
-                                            .font(.headline)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .stroke(globalGradient, lineWidth: 2)
-                                            )
-                                    }
-                                }
-                            }
                         }
                         .padding(.top, 20)
                     }

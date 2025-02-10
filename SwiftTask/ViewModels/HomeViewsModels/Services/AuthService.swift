@@ -10,12 +10,19 @@ class AuthService: AuthServiceProtocol {
     static let shared = AuthService()
 
     func login(email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        Auth.auth().signIn(withEmail: email, password: password) { _, error in
+        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
             if let error = error {
                 completion(.failure(error))
-            } else {
-                completion(.success(()))
+                return
             }
+            
+            // Check if the user is email verified or not
+            if let user = authResult?.user, !user.isEmailVerified {
+                completion(.failure(NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Please verify your email before logging in."])))
+                return
+            }
+            
+            completion(.success(()))
         }
     }
     
@@ -36,18 +43,25 @@ class AuthService: AuthServiceProtocol {
                 return
             }
             
-            //Create username from user's email address
-            let username = email.components(separatedBy: "@").first ?? "User"
+            // Send verification email to user
+            user.sendEmailVerification { error in
+                if let error = error {
+                    print("Error sending email verification: \(error.localizedDescription)")
+                }
+            }
+
+            // Generate username from email address
             
+            let username = email.components(separatedBy: "@").first ?? "User"
             let profile = ProfileModel(userName: username, taskLeft: 0, taskDone: 0, email: email)
             
             //Save user to Firestore
             UserService.shared.saveUserProfile(userID: user.uid, profile: profile) { error in
-                if let error = error {
-                    completion(.failure(error))
-                } else {
-                    completion(.success(()))
-                }
+                        if let error = error {
+                            completion(.failure(error))
+                        } else {
+                            completion(.success(()))
+                        }
             }
         }
     }

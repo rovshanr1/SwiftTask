@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 
 struct ProfileView: View {
+    @ObservedObject var homeViewModel: HomeViewModel
     @StateObject private var viewModel = ProfileViewModel()
     @State private var navigateToHome = false
     @State private var navigateToProfile = false
@@ -49,6 +50,10 @@ struct ProfileView: View {
             }
 
         }
+        .onAppear{
+            //Refresh Data when view appers
+            homeViewModel.fetchItems()
+        }
     }
     
     @ViewBuilder
@@ -86,7 +91,7 @@ struct ProfileView: View {
                         // Task Stats
                         HStack(spacing: 20) {
                             VStack {
-                                Text("\(user.taskDone)")
+                                Text("\(homeViewModel.newItems.count)") // Uncompleted tasks
                                     .font(.title2)
                                     .foregroundColor(.white)
                                 Text("Tasks Done")
@@ -100,7 +105,7 @@ struct ProfileView: View {
                             .shadow(radius: 5)
                             
                             VStack {
-                                Text("\(user.taskLeft)")
+                                Text("\(homeViewModel.completedTasks.count)")
                                     .font(.title2)
                                     .foregroundColor(.white)
                                 Text("Tasks Left")
@@ -116,16 +121,16 @@ struct ProfileView: View {
                     }
                     
                     List {
-                        Section(header: Text("Settings").foregroundColor(.gray)) {
-                            Button(action: {}) {
-                                HStack {
-                                    Image("setting-2")
-                                        .frame(width: 24, height: 24)
-                                    Text("App Settings")
-                                        .foregroundStyle(.white)
-                                }
-                            }
-                        }
+//                        Section(header: Text("Settings").foregroundColor(.gray)) {
+//                            Button(action: {}) {
+//                                HStack {
+//                                    Image("setting-2")
+//                                        .frame(width: 24, height: 24)
+//                                    Text("App Settings")
+//                                        .foregroundStyle(.white)
+//                                }
+//                            }
+//                        }
                         Section(header: Text("Account").foregroundStyle(.gray)){
                             //Change accountName button
                             Button(action: {
@@ -204,5 +209,6 @@ struct ProfileView: View {
 }
 
 #Preview {
-    ProfileView()
+    ProfileView(homeViewModel: HomeViewModel(context: PersistenceController.shared.viewContext))
 }
+

@@ -44,20 +44,20 @@ struct StartScreenView: View {
         ZStack {
             Color(red: 0.07, green: 0.07, blue: 0.07)
                 .ignoresSafeArea()
-            VStack(spacing: 30) {
-                Text("Welcome to SwiftTask")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Text("Please login to your account or create a new account to continue.")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 30)
-                
+            VStack() {
+                VStack(spacing: 10){
+                    Text("Welcome to SwiftTask")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("Please login to your account or create a new account to continue.")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                }
                 Spacer()
-                
-                VStack(spacing: 30) {
+                VStack(spacing: 20) {
                     Button(action: {
                         print("Login pressed")
                         showLoginScreen = true

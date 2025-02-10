@@ -3,29 +3,25 @@ import SwiftUI
 struct CreateAccountView: View {
     @StateObject private var viewModel = CreateAccountViewModel()
     @Binding var showRegisterScreen: Bool
-    @FocusState private var isKeyboardActive: Bool // Monitor keyboard status
+    @FocusState private var isKeyboardActive: Bool
     @State private var navigateToLogin = false
+    @State private var navigateToPrivacyPolicy = false
+    @State private var navigateToTermsOfService = false
     
-    // Define the global gradient once
-        let globalGradient = LinearGradient(
-            gradient: Gradient(colors: [Color(red: 1.00, green: 0.44, blue: 0.14), Color(red: 0.29, green: 0.29, blue: 0.51)]),
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+    let globalGradient = LinearGradient(
+        gradient: Gradient(colors: [Color(red: 1.00, green: 0.44, blue: 0.14), Color(red: 0.29, green: 0.29, blue: 0.51)]),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 
-                VStack {
-                    Spacer() // Prevents content scrolling when the keyboard is opened
-                }
-                
-                ScrollView { // Allows content to scroll when keyboard is opened
+                ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Header
                         Text("Register")
                             .font(.system(size: 36))
                             .foregroundColor(.white)
@@ -33,11 +29,10 @@ struct CreateAccountView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(alignment: .leading, spacing: 10) {
-                            // Username
                             Text("Username")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
-                            TextField("Enter your Username", text: $viewModel.email)
+                            TextField("Enter your Username", text: $viewModel.username)
                                 .padding()
                                 .autocapitalization(.none)
                                 .foregroundStyle(.white)
@@ -45,9 +40,22 @@ struct CreateAccountView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.gray, lineWidth: 2)
                                 )
-                                .focused($isKeyboardActive) // Monitor keyboard status
+                                .focused($isKeyboardActive)
                             
-                            // Password
+                            Text("Email")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                            TextField("Enter your Email", text: $viewModel.email)
+                                .padding()
+                                .keyboardType(.emailAddress)
+                                .autocapitalization(.none)
+                                .foregroundStyle(.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.gray, lineWidth: 2)
+                                )
+                                .focused($isKeyboardActive)
+
                             Text("Password")
                                 .font(.system(size: 16))
                                 .foregroundStyle(.white)
@@ -59,8 +67,7 @@ struct CreateAccountView: View {
                                         .stroke(Color.gray, lineWidth: 2)
                                 )
                                 .focused($isKeyboardActive)
-                            
-                            // Confirm Password
+
                             Text("Confirm Password")
                                 .font(.system(size: 16))
                                 .foregroundStyle(.white)
@@ -69,10 +76,10 @@ struct CreateAccountView: View {
                                 .foregroundStyle(.white)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(viewModel.password == viewModel.confirmPassword ? Color.gray : Color.red, lineWidth: 2)
+                                        .stroke(Color.gray, lineWidth: 2)
                                 )
                                 .focused($isKeyboardActive)
-                            
+
                             if let errorMessage = viewModel.errorMessage {
                                 Text(errorMessage)
                                     .foregroundColor(.red)
@@ -82,21 +89,65 @@ struct CreateAccountView: View {
                             }
                         }
                         
+                        VStack(spacing: 10){
+                            Toggle(isOn: $viewModel.isConditionsAccepted) {
+                                HStack {
+                                    Text("I agree to the")
+                                        .foregroundColor(.white)
+                                    Button(action: {
+                                        navigateToTermsOfService  = true
+                                    }) {
+                                        Text("Terms and Conditions")
+                                            .foregroundColor(.blue)
+                                            .underline()
+                                    }
+                                }
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: .orange)) // Toggle color
+                            .navigationDestination(isPresented: $navigateToTermsOfService ){
+                                TermsandConditionsView()
+                            }
+                            // Privacy Policy Onayı
+                            Toggle(isOn: $viewModel.isPrivacyAccepted) {
+                                HStack {
+                                    Text("I agree to the")
+                                        .foregroundColor(.white)
+                                    Button(action: {
+                                        navigateToPrivacyPolicy = true
+                                    }) {
+                                        Text("Privacy Policy")
+                                            .foregroundColor(.blue)
+                                            .underline()
+                                    }
+                                }
+                            }
+                            .toggleStyle(SwitchToggleStyle(tint: .orange)) //Toggle color
+                            .navigationDestination(isPresented: $navigateToPrivacyPolicy){
+                                PrivacyPolicyView()
+                            }
+                        }
+
                         VStack(spacing: 20) {
-                            
                             Button(action: {
-                                if viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty {
-                                    viewModel.errorMessage = "All fields are required"
-                                } else {
-                                    viewModel.isLoading = true
-                                    viewModel.createAccount { success in
-                                        DispatchQueue.main.async {
-                                            navigateToLogin = true
-                                        }
+                                if viewModel.username.isEmpty || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty {
+                                    viewModel.errorMessage = "All fields are required."
+                                    return
+                                }
+                                
+                                if viewModel.password != viewModel.confirmPassword {
+                                    viewModel.errorMessage = "Passwords do not match."
+                                    return
+                                }
+                                
+                                viewModel.isLoading = true
+                                viewModel.createAccount { success in
+                                    DispatchQueue.main.async {
+                                        viewModel.isLoading = false
+                                        
                                         if success {
-                                            print("Register successful!")
-                                            showRegisterScreen = false
-                                        }else{
+                                            viewModel.errorMessage = "Registration successful. Please verify your email."
+                                            navigateToLogin = true
+                                        } else {
                                             viewModel.errorMessage = "Registration failed. Try again."
                                         }
                                     }
@@ -106,6 +157,7 @@ struct CreateAccountView: View {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle())
                                         .foregroundStyle(.white)
+                                        .padding(.horizontal)
                                 } else {
                                     Text("Register")
                                         .font(.headline)
@@ -113,55 +165,11 @@ struct CreateAccountView: View {
                                         .padding()
                                         .foregroundStyle(.white)
                                         .background(globalGradient)
+                                        .opacity(viewModel.isPrivacyAccepted ? 1.0 : 0.5) // Button active/passive status
                                         .cornerRadius(10)
                                 }
                             }
-                            .disabled(viewModel.isLoading)
-                           
-                            // OR Divider
-                            HStack {
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundStyle(.gray)
-                                Text("or")
-                                    .foregroundStyle(.gray)
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundStyle(.gray)
-                            }
-                            
-                            // Google & Apple Login Buttons
-                            VStack(spacing: 20) {
-                                Button(action: {
-                                    print("Google Account logged in")
-                                }) {
-                                    Text("Login with Google")
-                                        .font(.headline)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(globalGradient, lineWidth: 2)
-                                        )
-                                }
-                                
-                                Button(action: {
-                                    print("Apple Account logged in")
-                                }) {
-                                    HStack {
-                                        Text("Login with Apple")
-                                            .font(.headline)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .stroke(globalGradient, lineWidth: 2)
-                                            )
-                                    }
-                                }
-                            }
+                            .disabled(!viewModel.isPrivacyAccepted || viewModel.isLoading) // The button will remain inactive
                         }
                         .padding(.top, 20)
                     }
@@ -169,10 +177,10 @@ struct CreateAccountView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onTapGesture {
-                    hideKeyboard() // Close keyboard when screen is touched
+                    hideKeyboard()
                 }
             }
-//            .navigationBarBackButtonHidden(true)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
@@ -188,13 +196,10 @@ struct CreateAccountView: View {
     }
 }
 
+
 // Hide Keyboard func
 extension View {
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
-
-//#Preview {
-//    CreateAccountView(showRegisterScreen: .constant(true))
-//}

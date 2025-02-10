@@ -10,7 +10,7 @@ import Foundation
 struct ProfileModel: Identifiable {
     let id = UUID()
     let userName: String
-    let taskLeft: Int
-    let taskDone: Int
+    var taskLeft: Int
+    var taskDone: Int
     let email: String
 }

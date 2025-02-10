@@ -23,20 +23,27 @@ class LoginViewModel: ObservableObject {
         self.authService = authService
     }
     
-    func login(completion: @escaping (Bool) -> Void){
+    func login(completion: @escaping (Bool) -> Void) {
         isLoading = true
         error = nil
-        authService.login(email: email, password: password) { [weak self] result in
+        
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
-                switch result {
-                case .success:
-                    completion(true)
-                    self?.isLoggedIn = true
-                case .failure(let error):
-                   self?.error = error.localizedDescription
+                
+                if let error = error {
+                    self?.error = error.localizedDescription
                     completion(false)
+                    return
                 }
+                
+                if let user = result?.user, !user.isEmailVerified {
+                    self?.error = "Please verify your email before logging in."
+                    completion(false)
+                    return
+                }
+                
+                completion(true)
             }
         }
     }

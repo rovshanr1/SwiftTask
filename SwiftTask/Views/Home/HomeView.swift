@@ -11,6 +11,8 @@ struct HomeView: View {
     @State private var showingDeleteAlert = false
     @State private var itemToDelete: Item?
     @State private var navigateToProfile = false
+    
+    
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: HomeViewModel(context: context))
@@ -22,7 +24,6 @@ struct HomeView: View {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 VStack {
-                    Spacer()
                     taskListView()
                     Spacer()
                     TabBarView(
@@ -54,7 +55,7 @@ struct HomeView: View {
                 Text("This task will be permanently deleted.")
             }
             .navigationDestination(isPresented: $navigateToProfile) {
-                ProfileView()
+                ProfileView(homeViewModel: viewModel)
             }
         }
     }
@@ -62,24 +63,27 @@ struct HomeView: View {
     private func taskListView() -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Today Section
-                if !viewModel.newItems.isEmpty {
-                    taskSection(
-                        title: "Today",
-                        isExpanded: $viewModel.isTodayExpanded,
-                        items: viewModel.newItems
-                    )
-                }
+                if viewModel.newItems.isEmpty && viewModel.completedTasks.isEmpty {
+                    EmptyTaskView()
+                } else {
+                    if !viewModel.newItems.isEmpty {
+                        taskSection(
+                            title: "Today",
+                            isExpanded: $viewModel.isTodayExpanded,
+                            items: viewModel.newItems
+                        )
+                    }
 
-                // Completed Section
-                if !viewModel.completedTasks.isEmpty {
-                    taskSection(
-                        title: "Completed",
-                        isExpanded: $viewModel.isCompletedExpanded,
-                        items: viewModel.completedTasks
-                    )
+                    if !viewModel.completedTasks.isEmpty {
+                        taskSection(
+                            title: "Completed",
+                            isExpanded: $viewModel.isCompletedExpanded,
+                            items: viewModel.completedTasks
+                        )
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(.vertical)
         }
     }
@@ -111,6 +115,7 @@ struct HomeView: View {
 
     private func saveTask() {
         if !newTaskTitle.isEmpty {
+            print("Saving task: \(newTaskTitle)")
             viewModel.addTask(title: newTaskTitle, description: newTaskDescription, date: newDate)
             newTaskTitle = ""
             newTaskDescription = ""

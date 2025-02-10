@@ -27,25 +27,31 @@ struct ChangePasswordView: View {
                     .padding(8)
                 
                 SecureField("Current Password", text: $currentPassword)
-                    .foregroundColor(.white)
-                    .frame(width: 287, height: 43)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(.gray), lineWidth: 2)
+                    )
                 
                 SecureField("New Password", text: $newPassword)
-                    .foregroundColor(.white)
-                    .frame(width: 287, height: 43)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(.gray), lineWidth: 2)
+                    )
                 
                 SecureField("Save", text: $confirmNewPassword)
-                    .foregroundColor(.white)
-                    .frame(width: 287, height: 43)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(.gray), lineWidth: 2)
+                    )
                 
                 
                 HStack(spacing: 20){

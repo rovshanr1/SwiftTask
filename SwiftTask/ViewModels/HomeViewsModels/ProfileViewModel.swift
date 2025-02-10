@@ -26,7 +26,19 @@ class ProfileViewModel: ObservableObject {
     init() {
         fetchUserData()
         fetchProfileImage()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(updateTaskCounts(_:)), name: .tasksUpdated, object: nil)
     }
+    
+    @objc private func updateTaskCounts(_ notification: Notification) {
+           if let taskDone = notification.userInfo?["taskDone"] as? Int,
+              let taskLeft = notification.userInfo?["taskLeft"] as? Int {
+               DispatchQueue.main.async {
+                   self.user?.taskDone = taskDone
+                   self.user?.taskLeft = taskLeft
+               }
+           }
+       }
     
     func fetchUserData() {
         isLoading = true
