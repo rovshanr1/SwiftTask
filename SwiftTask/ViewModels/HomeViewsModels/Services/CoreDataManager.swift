@@ -97,4 +97,22 @@ class CoreDataManager {
             return nil
         }
     }
+    // Mark: - Deleting Profile Photos
+    func deleteProfileImage(userId: String) {
+        let fetchRequest: NSFetchRequest<Profile> = Profile.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "userId == %@", userId)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let profileEntity = results.first {
+                profileEntity.profileImage = nil
+                try context.save()
+                print("Profile image removed successfully")
+            } else {
+                print("No profile found for the given userId")
+            }
+        } catch {
+            print("Error deleting profile image from CoreData: \(error)")
+        }
+    }
 }

@@ -68,7 +68,7 @@ struct HomeView: View {
                 } else {
                     if !viewModel.newItems.isEmpty {
                         taskSection(
-                            title: "Today",
+                            title: "New Task",
                             isExpanded: $viewModel.isTodayExpanded,
                             items: viewModel.newItems
                         )

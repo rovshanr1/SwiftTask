@@ -146,6 +146,18 @@ class ProfileViewModel: ObservableObject {
         }
     }
     
+    // Deleting Profile Image
+    func removeProfileImage() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+       
+        DispatchQueue.main.async {
+            self.profileImageData = nil
+        }
+        // Remove from CoreData
+        CoreDataManager.shared.deleteProfileImage(userId: userID)
+    }
+
+    
     func logout() {
         try? Auth.auth().signOut()
         DispatchQueue.main.async {

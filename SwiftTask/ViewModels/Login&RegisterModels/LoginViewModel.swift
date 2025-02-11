@@ -47,6 +47,26 @@ class LoginViewModel: ObservableObject {
             }
         }
     }
+    
+    func resetPassword(){
+        error = nil
+        guard !email.isEmpty else {
+            error = "Please enter your email address."
+            return
+        }
+        
+        Auth.auth().sendPasswordReset(withEmail: email){[weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.error = error.localizedDescription}
+                else{
+                    self?.error = "Password reset email sent.Check your inbox!"
+                }
+            }
+            
+        }
+    }
+    
 }
     
 

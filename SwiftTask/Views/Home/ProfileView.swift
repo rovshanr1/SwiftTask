@@ -20,7 +20,6 @@ struct ProfileView: View {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 VStack {
-                    Spacer()
                     profileViewContent()
                     Spacer()
                     TabBarView(
@@ -30,14 +29,6 @@ struct ProfileView: View {
                     )
                 }
                 .navigationBarBackButtonHidden(true)
-                .toolbar{
-                    ToolbarItem(placement: .principal){
-                        Text("Profile")
-                            .font(.title)
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.center)
-                    }
-                }
             }
             .navigationDestination(isPresented: $navigateToHome) {
                 HomeView(context: PersistenceController.shared.viewContext)
@@ -65,6 +56,10 @@ struct ProfileView: View {
             } else {
                 if let user = viewModel.user {
                     VStack{
+                        Text("Profile")
+                          .font(.title)
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
                         // Profile Image
                         if let imageData = viewModel.profileImageData, let uiImage = UIImage(data: imageData) {
                             Image(uiImage: uiImage)

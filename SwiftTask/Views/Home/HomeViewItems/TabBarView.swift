@@ -55,32 +55,36 @@ struct TabBarView: View {
     
     private var leftTabs: some View {
         HStack(spacing: Constants.tabBarSpacing) {
-            TabButton(
-                icon: "house",
-                isSelected: navigateToHome,
-                action: { navigateToHome = true }
-            )
+            
 //            TabButton(
 //                icon: "calendar",
 //                isSelected: false,
 //                action: { /* Calendar action */ }
 //            )
+            
+            TabButton(
+                icon: "house",
+                isSelected: navigateToHome,
+                action: { navigateToHome = true }
+            )
         }
         .padding(.leading, Constants.horizontalPadding)
     }
     
     private var rightTabs: some View {
         HStack(spacing: Constants.tabBarSpacing) {
-//            TabButton(
-//                icon: "clock",
-//                isSelected: false,
-//                action: { /* Clock action */ }
-//            )
             TabButton(
                 icon: "person",
                 isSelected: navigateToProfile,
                 action: { navigateToProfile = true }
             )
+            
+//            TabButton(
+//                icon: "clock",
+//                isSelected: false,
+//                action: { /* Clock action */ }
+//            )
+           
         }
         .padding(.trailing, Constants.horizontalPadding)
     }

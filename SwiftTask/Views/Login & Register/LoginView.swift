@@ -5,6 +5,7 @@ struct LoginView: View {
     @Binding var showLoginScreen: Bool
     @FocusState private var isKeyboardActive: Bool
     @State private var navigationToHome = false
+    @State private var navigateToResetPassword = false
     
     // Define the global gradient once
         let globalGradient = LinearGradient(
@@ -25,12 +26,12 @@ struct LoginView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Title
-                        Text("Login")
-                            .font(.system(size: 36))
-                            .foregroundColor(.white)
-                            .padding(.bottom, 30)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+//                        // Title
+//                        Text("Login")
+//                            .font(.system(size: 36))
+//                            .foregroundColor(.white)
+//                            .padding(.bottom, 30)
+//                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(alignment: .leading, spacing: 10) {
                             // Username
@@ -81,7 +82,7 @@ struct LoginView: View {
                                             if success {
                                                 navigationToHome = true
                                             } else {
-                                                viewModel.error = "Login failed. Please check your credentials."
+                                                viewModel.error = "Login failed. Please check your email's."
                                             }
                                         }
                                     }
@@ -103,6 +104,17 @@ struct LoginView: View {
                             }
                             .disabled(viewModel.isLoading)
                             
+                            Button(action: {
+                                navigateToResetPassword = true
+                            }){
+                                Text("Forgot Password?")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .underline()
+                            }
+                            .sheet(isPresented: $navigateToResetPassword){
+                                ResetPasswordView(yourEmail: $viewModel.email, isPresented: $navigateToResetPassword, viewModel: viewModel)
+                            }
                         }
                         .padding(.top, 20)
                     }
@@ -114,6 +126,7 @@ struct LoginView: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
+            .navigationTitle("Login")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
@@ -133,9 +146,7 @@ struct LoginView: View {
     }
 }
 
-//NavigationLink(destination: HomeView(context: PersistenceController.shared.viewContext), isActive: $navigationToHome){
-//    EmptyView()
-//}
+
 
 #Preview {
     LoginView(showLoginScreen: .constant(true))
