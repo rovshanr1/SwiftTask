@@ -21,11 +21,10 @@ class AuthService: AuthServiceProtocol {
                 completion(.failure(error))
                 return
             }
-            
             if let user = authResult?.user, !user.isEmailVerified {
-                completion(.failure(NSError(domain: "AuthError", 
-                                         code: 0, 
-                                         userInfo: [NSLocalizedDescriptionKey: "Please verify your email before logging in."])))
+                completion(.failure(NSError(domain: "AuthError",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Please verify your email before logging in."])))
                 return
             }
             
@@ -36,17 +35,17 @@ class AuthService: AuthServiceProtocol {
     func createAccount(username: String, email: String, password: String, completion: @escaping (Result<Void, Error>) -> Void) {
         // First validate inputs
         guard !username.isEmpty else {
-            completion(.failure(NSError(domain: "AuthError", 
-                                     code: 0, 
-                                     userInfo: [NSLocalizedDescriptionKey: "Username cannot be empty"])))
+            completion(.failure(NSError(domain: "AuthError",
+            code: 0,
+            userInfo: [NSLocalizedDescriptionKey: "Username cannot be empty"])))
             return
         }
         
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard self != nil else {
-                completion(.failure(NSError(domain: "AuthError", 
-                                         code: 0, 
-                                         userInfo: [NSLocalizedDescriptionKey: "Internal error occurred"])))
+                completion(.failure(NSError(domain: "AuthError",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "Internal error occurred"])))
                 return
             }
             
@@ -56,9 +55,9 @@ class AuthService: AuthServiceProtocol {
             }
             
             guard let user = authResult?.user else {
-                completion(.failure(NSError(domain: "AuthError", 
-                                         code: 0, 
-                                         userInfo: [NSLocalizedDescriptionKey: "User creation failed"])))
+                completion(.failure(NSError(domain: "AuthError",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "User creation failed"])))
                 return
             }
             
@@ -84,7 +83,8 @@ class AuthService: AuthServiceProtocol {
                 userName: username,
                 taskLeft: 0,
                 taskDone: 0,
-                email: email
+                email: email,
+                timestamp: Date()
             )
             
             // Save user profile to Firestore

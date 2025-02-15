@@ -68,7 +68,8 @@ class ProfileViewModel: ObservableObject {
             userName: name,
             taskLeft: user?.taskLeft ?? 0,
             taskDone: user?.taskDone ?? 0,
-            email: user?.email ?? ""
+            email: user?.email ?? "",
+            timestamp: Date()
         )
         
         CoreDataManager.shared.saveUserProfile(userId: userID, profile: updatedProfile)
@@ -85,18 +86,35 @@ class ProfileViewModel: ObservableObject {
         }
     }
     
+    func resizeImage(_ image: UIImage, to targetSize: CGSize) -> UIImage? {
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        let scaleFactor = min(widthRatio, heightRatio)
+        let newSize = CGSize(width: size.width * scaleFactor, height: size.height * scaleFactor)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+    
     func loadImage(from item: PhotosPickerItem) {
         isLoading = true
         ImageService.shared.loadImage(from: item) { data in
             DispatchQueue.main.async {
-                if let data = data {
-                    self.profileImageData = data
-                    CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: data)
+                if let data = data, let uiImage = UIImage(data: data) {
+                    let maxDimension: CGFloat = 1024.0
+                    let targetSize = CGSize(width: maxDimension, height: maxDimension)
+                    if let resizedImage = self.resizeImage(uiImage, to: targetSize) {
+                        self.profileImageData = resizedImage.jpegData(compressionQuality: 0.8)
+                        CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: self.profileImageData!)
+                    }
                 }
                 self.isLoading = false
             }
         }
     }
+
     
     func fetchProfileImage() {
         guard let userID = Auth.auth().currentUser?.uid else { return }

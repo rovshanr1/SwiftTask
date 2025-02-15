@@ -49,7 +49,8 @@ class CoreDataManager {
                     userName: profileEntity.userName ?? "No Name",
                     taskLeft: Int(profileEntity.taskLeft),
                     taskDone: Int(profileEntity.taskDone),
-                    email: profileEntity.email ?? ""
+                    email: profileEntity.email ?? "",
+                    timestamp: profileEntity.timestamp ?? Date() // Accessing timestamp directly
                 )
             }
         } catch {
@@ -58,7 +59,7 @@ class CoreDataManager {
         
         return nil
     }
-    
+
     // MARK: - Saving Profile Photo
     func saveProfileImage(userId: String, imageData: Data) {
         let request: NSFetchRequest<Profile> = Profile.fetchRequest()

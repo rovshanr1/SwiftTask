@@ -8,17 +8,34 @@
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
+import UIKit
 
 class OfflineSyncManager {
     static let shared = OfflineSyncManager()
     private var offlineQueue: [[String: Any]] = []
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     
     func addToQueue(data: [String: Any]) {
         offlineQueue.append(data)
     }
     
+    func startBackgroundTask() {
+        backgroundTask = UIApplication.shared.beginBackgroundTask(expirationHandler: {
+            self.endBackgroundTask()
+        })
+    }
+    
+    func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
+    }
+    
     func retryOfflineSync() {
         guard NetworkService.shared.isConnectedToNetwork() else { return }
+        
+        startBackgroundTask()
         
         while !offlineQueue.isEmpty {
             let userData = offlineQueue.removeFirst()
@@ -34,5 +51,8 @@ class OfflineSyncManager {
                 }
             }
         }
+        
+        endBackgroundTask()
     }
 }
+

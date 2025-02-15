@@ -23,7 +23,8 @@ class UserService {
                     userName: data?["name"] as? String ?? "No Name",
                     taskLeft: data?["taskLeft"] as? Int ?? 0,
                     taskDone: data?["taskDone"] as? Int ?? 0,
-                    email: data?["email"] as? String ?? ""
+                    email: data?["email"] as? String ?? "",
+                    timestamp: data?["timestamp"] as? Date ?? Date()
                 )
                 completion(profile)
             } else {
@@ -31,6 +32,7 @@ class UserService {
             }
         }
     }
+
     
     func saveUserProfile(userID: String, profile: ProfileModel, completion: ((Error?) -> Void)? = nil) {
         let userRef = db.collection("users").document(userID)
@@ -38,7 +40,8 @@ class UserService {
             "name": profile.userName,
             "taskLeft": profile.taskLeft,
             "taskDone": profile.taskDone,
-            "email": profile.email
+            "email": profile.email,
+            "timestamp": FieldValue.serverTimestamp()
         ]
         userRef.setData(userData, merge: true, completion: completion)
     }

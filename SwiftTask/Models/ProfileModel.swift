@@ -8,9 +8,10 @@
 import Foundation
 
 struct ProfileModel: Identifiable {
-    let id = UUID()
-    let userName: String
+    var id = UUID()
+    var userName: String
     var taskLeft: Int
     var taskDone: Int
-    let email: String
+    var email: String
+    var timestamp: Date
 }
