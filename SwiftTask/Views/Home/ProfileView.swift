@@ -17,8 +17,10 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
+                
                 VStack {
                     profileViewContent()
                     Spacer()
@@ -36,9 +38,7 @@ struct ProfileView: View {
             .navigationDestination(isPresented: $navigateToIntroView) {
                 IntroView()
             }
-            .sheet(isPresented: $showingCustomModal) {
-                ChangeUsernameView(isPresented: $showingCustomModal, newUserName: $newUserName, viewModel: viewModel)
-            }
+            
 
         }
         .onAppear{
@@ -73,6 +73,7 @@ struct ProfileView: View {
                             Image(systemName: "person.circle.fill")
                                 .resizable()
                                 .scaledToFill()
+                                .foregroundStyle(.white)
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
@@ -126,17 +127,26 @@ struct ProfileView: View {
 //                                }
 //                            }
 //                        }
-                        Section(header: Text("Account").foregroundStyle(.gray)){
+                        
+                        Section(header: Text("Account").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))){
                             //Change accountName button
                             Button(action: {
                                 showingCustomModal = true
                             }){
                                 HStack{
                                     Image("user")
+                                        .foregroundStyle(.white)
                                         .frame(width: 24, height: 24)
                                     Text("Change account name")
                                         .foregroundStyle(.white)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(.white)
                                 }
+                            }
+                            .sheet(isPresented: $showingCustomModal) {
+                                    ChangeUsernameView(isPresented: $showingCustomModal, newUserName: $newUserName, viewModel: viewModel)
+                                    .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
                             }
                             
                             // Display changed name if updated
@@ -151,12 +161,17 @@ struct ProfileView: View {
                             }){
                                 HStack {
                                     Image("camera")
+                                        .foregroundStyle(.white)
                                         .frame(width: 24, height: 24)
                                     Text("Change account Image")
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
                                         .foregroundStyle(.white)
                                 }
                             }.sheet(isPresented: $showImagePicker) {
                                 ChangeProfileImageView(viewModel: viewModel)
+                                    .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
                             }
    
                             //Change password button
@@ -165,16 +180,23 @@ struct ProfileView: View {
                             }){
                                 HStack{
                                     Image("key")
+                                        .foregroundStyle(.white)
                                         .frame(width: 24, height: 24)
                                     Text("Change account password")
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
                                         .foregroundStyle(.white)
                                 }
                             }.sheet(isPresented: $showChangePasswordView) {
                                 ChangePasswordView(viewModel: viewModel)
+                                    .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                            
                             }
                             
                         }
-                        Section(header: Text("SwiftTask").foregroundStyle(.gray)){
+                        .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+                        Section(header: Text("SwiftTask").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))){
                             //Logout button
                             Button(action: {
                                 viewModel.logout()
@@ -188,8 +210,8 @@ struct ProfileView: View {
                                 }
                             }
                         }
+                        .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
                     }
-                    .listRowBackground(Color.clear)
                     .scrollContentBackground(.hidden)
                     .background(Color(red: 0.07, green: 0.07, blue: 0.07))
                     
@@ -199,11 +221,8 @@ struct ProfileView: View {
                 }
             }
         }
-        .padding()
     }
 }
 
-#Preview {
-    ProfileView(homeViewModel: HomeViewModel(context: PersistenceController.shared.viewContext))
-}
+
 

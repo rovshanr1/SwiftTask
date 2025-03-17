@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var navigateToProfile = false
     
     
+    
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: HomeViewModel(context: context))
@@ -36,12 +37,17 @@ struct HomeView: View {
             .navigationBarBackButtonHidden(true)
             .onAppear { viewModel.fetchItems() }
             .sheet(isPresented: $showingSheet) {
-                AddTaskSheet(
-                    isPresented: $showingSheet,
-                    title: $newTaskTitle,
-                    description: $newTaskDescription,
-                    onSave: saveTask
-                )
+                ZStack{
+                    Color(red: 0.07, green: 0.07, blue: 0.07)
+                        .ignoresSafeArea()
+                    
+                    AddTaskSheet(
+                        isPresented: $showingSheet,
+                        title: $newTaskTitle,
+                        description: $newTaskDescription,
+                        onSave: saveTask
+                    )
+                }
             }
             .alert("Are you sure?", isPresented: $showingDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
@@ -208,15 +214,20 @@ struct TaskRow: View {
             }
         }
         .sheet(isPresented: $isEditing) {
-            EditTaskSheet(
-                isPresented: $isEditing,
-                title: $editedTitle,
-                description: $editedDescription,
-                onSave: {
-                    onEdit(item, editedTitle, editedDescription)
-                    isEditing = false
-                }
-            )
+            ZStack{
+                Color(red: 0.07, green: 0.07, blue: 0.07)
+                    .ignoresSafeArea()
+                
+                EditTaskSheet(
+                    isPresented: $isEditing,
+                    title: $editedTitle,
+                    description: $editedDescription,
+                    onSave: {
+                        onEdit(item, editedTitle, editedDescription)
+                        isEditing = false
+                    }
+                )
+            }
         }
     }
 }
@@ -241,6 +252,3 @@ struct EmptyTaskView: View {
     }
 }
 
-#Preview {
-    HomeView(context: PersistenceController.shared.viewContext)
-}

@@ -27,31 +27,31 @@ struct ChangePasswordView: View {
                     .padding(8)
                 
                 SecureField("Current Password", text: $currentPassword)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                     .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(.gray), lineWidth: 2)
-                    )
+                    .frame(width: 352, height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color.gray, lineWidth: 2)
+                        )
                 
                 SecureField("New Password", text: $newPassword)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                     .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(.gray), lineWidth: 2)
-                    )
+                    .frame(width: 352, height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color.gray, lineWidth: 2)
+                        )
                 
                 SecureField("Save", text: $confirmNewPassword)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                     .padding()
-                    .overlay(
+                    .frame(width: 352, height: 58)
+                    .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(.gray), lineWidth: 2)
-                    )
+                            .stroke(Color.gray, lineWidth: 2)
+                        )
                 
                 
                 HStack(spacing: 20){

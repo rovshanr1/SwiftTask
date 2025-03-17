@@ -11,6 +11,8 @@ import SwiftUI
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) var dismiss
     @State private var navigateToRegister = false
+    @State private var loginViewModel = LoginViewModel()
+    @State private var showLoginScreen = false
     
     var body: some View {
         NavigationStack {
@@ -99,7 +101,7 @@ struct PrivacyPolicyView: View {
                 }
             }
             .navigationDestination(isPresented: $navigateToRegister) {
-                CreateAccountView(showRegisterScreen: $navigateToRegister)
+                CreateAccountView(loginviewModel: loginViewModel, showRegisterScreen: $navigateToRegister, showLoginScreen: $showLoginScreen)
             }
             .navigationBarBackButtonHidden(true)
         }

@@ -7,6 +7,7 @@ struct AddTaskSheet: View {
     var onSave: () -> Void
     
     var body: some View {
+            
             VStack(spacing: 20) {
                 Text("Add Task")
                     .font(.title2)
@@ -17,22 +18,22 @@ struct AddTaskSheet: View {
                     .padding(8)
                 
                 TextField("Task title", text: $title, prompt: Text("TextTitle").foregroundStyle(.gray))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                     .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(.gray), lineWidth: 2)
-                    )
+                    .frame(width: 352, height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color.gray, lineWidth: 2)
+                        )
                 
                 TextField("Description", text: $description, prompt: Text("Description").foregroundStyle(.gray))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                     .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(.gray), lineWidth: 2)
-                    )
+                    .frame(width: 352, height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(Color.gray, lineWidth: 2)
+                        )
                 
                 HStack {
                     Button(action: {
@@ -55,7 +56,7 @@ struct AddTaskSheet: View {
                     }
                     .padding(.horizontal)
                 }
-             
+                
             }
             .cornerRadius(15)
             .padding()
@@ -63,5 +64,4 @@ struct AddTaskSheet: View {
         }
     }
 
- 
 

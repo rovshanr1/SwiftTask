@@ -1,13 +1,12 @@
+
 import SwiftUI
 
 struct CreateAccountView: View {
+    @ObservedObject var loginviewModel: LoginViewModel
     @StateObject private var viewModel = CreateAccountViewModel()
     @Binding var showRegisterScreen: Bool
+    @Binding var showLoginScreen: Bool // Yeni eklenen binding
     @FocusState private var isKeyboardActive: Bool
-    @State private var navigateToLogin = false
-    @State private var navigateToPrivacyPolicy = false
-    @State private var navigateToTermsOfService = false
-    @State private var showPasswordInfo = false
     
     let globalGradient = LinearGradient(
         gradient: Gradient(colors: [Color(red: 1.00, green: 0.44, blue: 0.14), Color(red: 0.29, green: 0.29, blue: 0.51)]),
@@ -23,12 +22,13 @@ struct CreateAccountView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-//                        Text("Register")
-//                            .font(.system(size: 36))
-//                            .foregroundColor(.white)
-//                            .padding(.bottom, 30)
-//                            .frame(maxWidth: .infinity, alignment: .leading)
-                        // Updated VStack implementation
+                        
+                        Text("Create Account")
+                            .foregroundColor(.white)
+                            .font(.system(size: 28, weight: .bold))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.bottom, 10)
+                        
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Username")
                                 .font(.system(size: 16))
@@ -79,13 +79,13 @@ struct CreateAccountView: View {
                                     .frame(maxWidth: .infinity, alignment: .center)
                             }
                         }
+                        
                         VStack(spacing: 20) {
                             Button(action: {
-                                
                                 guard viewModel.isPrivacyAccepted && viewModel.isConditionsAccepted else {
-                                       viewModel.errorMessage = "Please accept Privacy Policy and Terms & Conditions"
-                                       return
-                                   }
+                                    viewModel.errorMessage = "Please accept Privacy Policy and Terms & Conditions"
+                                    return
+                                }
                                 
                                 if viewModel.username.isEmpty || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty {
                                     viewModel.errorMessage = "All fields are required."
@@ -103,71 +103,74 @@ struct CreateAccountView: View {
                                         viewModel.isLoading = false
                                         
                                         if success {
-                                            navigateToLogin = true
+                                            showRegisterScreen = false
+                                            showLoginScreen = true
                                         }
                                     }
                                 }
                             }) {
-                                if viewModel.isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle())
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal)
-                                } else {
-                                    Text("Register")
-                                        .font(.headline)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .background(globalGradient)
-                                        .opacity(viewModel.isPrivacyAccepted ? 1.0 : 0.5) // Button active/passive status
-                                        .cornerRadius(10)
+                                ZStack{
+                                    if viewModel.isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle())
+                                            .foregroundStyle(.white)
+                                            .padding(.horizontal)
+                                        
+                                    } else {
+                                        Text("Register")
+                                            .font(.headline)
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .foregroundStyle(.white)
+                                            .background(globalGradient)
+                                            .cornerRadius(10)
+                                    }
                                 }
                             }
-                            .disabled(!viewModel.isPrivacyAccepted || viewModel.isLoading) // The button will remain inactive
-                            .navigationDestination(isPresented: $navigateToLogin){
-                                LoginView(showLoginScreen: $showRegisterScreen)
-                            }
+                            .disabled(viewModel.isLoading)
                         }
                         .padding(.top, 20)
                         
-                        VStack(spacing: 10){
+                        VStack(spacing: 10) {
                             Toggle(isOn: $viewModel.isConditionsAccepted) {
                                 HStack {
                                     Text("I agree to the")
                                         .foregroundColor(.white)
-                                    Button(action: {
-                                        navigateToTermsOfService  = true
-                                    }) {
+                                    Button(action: {}) {
                                         Text("Terms and Conditions")
                                             .foregroundColor(.blue)
                                             .underline()
                                     }
                                 }
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .orange)) // Toggle color
-                            .navigationDestination(isPresented: $navigateToTermsOfService ){
-                                TermsandConditionsView()
-                            }
-                            // Privacy Policy Onayı
+                            .toggleStyle(SwitchToggleStyle(tint: .orange))
+                            
                             Toggle(isOn: $viewModel.isPrivacyAccepted) {
                                 HStack {
                                     Text("I agree to the")
                                         .foregroundColor(.white)
-                                    Button(action: {
-                                        navigateToPrivacyPolicy = true
-                                    }) {
+                                    Button(action: {}) {
                                         Text("Privacy Policy")
                                             .foregroundColor(.blue)
                                             .underline()
                                     }
                                 }
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .orange)) //Toggle color
-                            .navigationDestination(isPresented: $navigateToPrivacyPolicy){
-                                PrivacyPolicyView()
-                            }
+                            .toggleStyle(SwitchToggleStyle(tint: .orange))
                         }
+                        
+                        // Yeni düzenlenmiş buton
+                        Button(action: {
+                            showLoginScreen = true    // LoginView'ı aç
+                        }) {
+                            Text("Already have an account? Log in")
+                                .foregroundColor(.blue)
+                                .underline()
+                        }
+                        .navigationDestination(isPresented: $showLoginScreen){
+                            LoginView(showLoginScreen: $showLoginScreen)
+                        }
+                        .padding(.top, 10)
                     }
                     .padding(.horizontal, 20)
                 }
@@ -177,7 +180,7 @@ struct CreateAccountView: View {
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .navigationTitle("Register")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
@@ -190,10 +193,10 @@ struct CreateAccountView: View {
                 }
             }
         }
-        
     }
 }
 
+// PasswordFieldWithInfo ve hideKeyboard extension değişmeden kalacak.
 struct PasswordFieldWithInfo: View {
     @Binding var text: String
     let title: String

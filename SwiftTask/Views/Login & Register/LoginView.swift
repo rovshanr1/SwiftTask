@@ -21,17 +21,11 @@ struct LoginView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    Spacer() 
+                    Spacer()
                 }
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-//                        // Title
-//                        Text("Login")
-//                            .font(.system(size: 36))
-//                            .foregroundColor(.white)
-//                            .padding(.bottom, 30)
-//                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         VStack(alignment: .leading, spacing: 10) {
                             // Username
@@ -122,11 +116,11 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onTapGesture {
-                    hideKeyboard() 
+                    hideKeyboard()
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .navigationTitle("Login")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
@@ -136,6 +130,12 @@ struct LoginView: View {
                             .font(.title2)
                             .foregroundColor(.white)
                     }
+                }
+                
+                ToolbarItem(placement: .principal){
+                    Text("Login")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 20, weight: .bold))
                 }
             
             }

@@ -37,6 +37,7 @@ struct ChangeProfileImageView: View {
                     Image(systemName: "person.circle.fill")
                         .resizable()
                         .scaledToFill()
+                        .foregroundStyle(.white)
                         .frame(width: 100, height: 100)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
@@ -69,7 +70,7 @@ struct ChangeProfileImageView: View {
                         .foregroundStyle(.white)
                         .frame(width: 153, height: 48)
                         .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .cornerRadius(5)
+                        .cornerRadius(10)
                 }
             }
             VStack{
@@ -81,7 +82,7 @@ struct ChangeProfileImageView: View {
                                .foregroundStyle(.white)
                                .frame(width: 153, height: 48)
                                .background(Color.red)
-                               .cornerRadius(5)
+                               .cornerRadius(10)
                        }
                        .transition(.opacity)
                        .alert(isPresented: $showDeleteAlert){

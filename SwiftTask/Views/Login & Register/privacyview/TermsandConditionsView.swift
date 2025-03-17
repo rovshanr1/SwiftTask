@@ -11,6 +11,8 @@ struct TermsandConditionsView: View {
     @Environment(\.dismiss) var dismiss
     @State var navigateToRegister = false
     @State var navigateToPrivacyPolicy = false
+    @State private var loginViewModel = LoginViewModel()
+    @State private var showLoginScreen = false
     
     var body: some View {
         NavigationStack {
@@ -119,7 +121,7 @@ struct TermsandConditionsView: View {
                 }
             }
             .navigationDestination(isPresented: $navigateToRegister){
-                CreateAccountView(showRegisterScreen: $navigateToRegister)
+                CreateAccountView(loginviewModel: loginViewModel, showRegisterScreen: $navigateToRegister, showLoginScreen: $showLoginScreen)
             }
             .navigationBarBackButtonHidden(true)
         }
