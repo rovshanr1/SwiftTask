@@ -101,7 +101,7 @@ struct ProfileView: View {
                                 Text("\(homeViewModel.newItems.count)") // Uncompleted tasks
                                     .font(.title2)
                                     .foregroundColor(.white)
-                                Text("Tasks Done")
+                                Text("Tasks Left")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
@@ -115,7 +115,7 @@ struct ProfileView: View {
                                 Text("\(homeViewModel.completedTasks.count)")
                                     .font(.title2)
                                     .foregroundColor(.white)
-                                Text("Tasks Left")
+                                Text("Tasks Done")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }

@@ -26,12 +26,21 @@ struct HomeView: View {
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
-                VStack {
+                VStack(spacing: 0) {
                     if navigateToHome {
-                        taskListView()
+                        VStack(spacing: 16) {
+                            headerView
+                            searchBar
+                            taskListView()
+                                .padding(.bottom, 90)
+                        }
                     } else if navigateToFocus {
                         FocusView()
+                            .padding(.bottom, 90)
                     }
+                }
+                
+                VStack {
                     Spacer()
                     TabBarView(
                         navigateToHome: .constant(true),
@@ -44,6 +53,9 @@ struct HomeView: View {
             }
             .navigationBarBackButtonHidden(true)
             .onAppear { viewModel.fetchItems() }
+            .onTapGesture {
+                hideKeyboard()
+            }
             .sheet(isPresented: $showingSheet) {
                 ZStack{
                     Color(red: 0.07, green: 0.07, blue: 0.07)
@@ -80,25 +92,105 @@ struct HomeView: View {
         }
     }
 
+    private var headerView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Hello,")
+                    .font(.title2)
+                    .foregroundColor(.gray)
+                Text(viewModel.userName)
+                    .font(.title)
+                    .foregroundColor(.white)
+            }
+            Spacer()
+            
+            NavigationLink(destination: ProfileView(homeViewModel: viewModel)) {
+                if let imageData = viewModel.profileImageData, let uiImage = UIImage(data: imageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 42, height: 42)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                } else {
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .frame(width: 42, height: 42)
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 16)
+    }
+
+    private var searchBar: some View {
+        HStack {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
+                TextField("Search for your tasks...", text: $viewModel.searchText)
+                    .foregroundColor(.white)
+                    .accentColor(.white)
+                    .onChange(of: viewModel.searchText) { oldValue, newValue in
+                        viewModel.isSearching = !viewModel.searchText.isEmpty
+                    }
+                    .submitLabel(.search)
+                    .onSubmit {
+                        hideKeyboard()
+                    }
+                
+                if !viewModel.searchText.isEmpty {
+                    Button(action: {
+                        viewModel.searchText = ""
+                        viewModel.isSearching = false
+                        hideKeyboard()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+            .cornerRadius(4)
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
     private func taskListView() -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if viewModel.newItems.isEmpty && viewModel.completedTasks.isEmpty {
-                    EmptyTaskView()
+                if viewModel.filteredNewItems.isEmpty && viewModel.filteredCompletedTasks.isEmpty {
+                    if viewModel.isSearching {
+                        VStack(spacing: 16) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 48))
+                                .foregroundColor(.gray)
+                            Text("No matching tasks found")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, 100)
+                    } else {
+                        EmptyTaskView()
+                    }
                 } else {
-                    if !viewModel.newItems.isEmpty {
+                    if !viewModel.filteredNewItems.isEmpty {
                         taskSection(
                             title: "New Task",
                             isExpanded: $viewModel.isTodayExpanded,
-                            items: viewModel.newItems
+                            items: viewModel.filteredNewItems
                         )
                     }
 
-                    if !viewModel.completedTasks.isEmpty {
+                    if !viewModel.filteredCompletedTasks.isEmpty {
                         taskSection(
                             title: "Completed",
                             isExpanded: $viewModel.isCompletedExpanded,
-                            items: viewModel.completedTasks
+                            items: viewModel.filteredCompletedTasks
                         )
                     }
                 }
@@ -185,25 +277,68 @@ struct TaskRow: View {
     @State private var editedTitle = ""
     @State private var editedDescription = ""
     
+    private var taskCategory: TaskCategory? {
+        if let categoryString = item.category {
+            return TaskCategory(rawValue: categoryString)
+        }
+        return nil
+    }
+    
+    private var taskPriority: TaskPriority? {
+        if item.priority > 0 {
+            return TaskPriority(rawValue: Int(item.priority))
+        }
+        return nil
+    }
+    
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(item.title ?? "Unnamed Task")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                if isDescriptionVisible, let description = item.taskDescription, !description.isEmpty {
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .transition(.opacity)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(item.title ?? "Unnamed Task")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    if let category = taskCategory {
+                        HStack(spacing: 4) {
+                            Image(systemName: category.icon)
+                                .foregroundColor(category.color)
+                            Text(category.rawValue)
+                                .font(.caption)
+                                .foregroundColor(category.color)
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(category.color.opacity(0.2))
+                        .cornerRadius(4)
+                    }
+                }
+                
+                Spacer()
+                
+                if let priority = taskPriority {
+                    Text(priority.title)
+                        .font(.caption)
+                        .foregroundColor(priority.color)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(priority.color.opacity(0.2))
+                        .cornerRadius(4)
+                }
+                
+                Button(action: {
+                    onComplete(item)
+                }) {
+                    Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(.white)
                 }
             }
-            Spacer()
-            Button(action: {
-                onComplete(item)
-            }) {
-                Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(.white)
+            
+            if isDescriptionVisible, let description = item.taskDescription, !description.isEmpty {
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .transition(.opacity)
             }
         }
         .padding()

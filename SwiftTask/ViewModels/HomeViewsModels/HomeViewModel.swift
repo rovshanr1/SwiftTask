@@ -1,5 +1,74 @@
 import CoreData
 import SwiftUI
+import FirebaseAuth
+
+enum TaskCategory: String, CaseIterable {
+    case grocery = "Grocery"
+    case work = "Work"
+    case sport = "Sport"
+    case design = "Design"
+    case university = "University"
+    case social = "Social"
+    case music = "Music"
+    case health = "Health"
+    case movie = "Movie"
+    case home = "Home"
+    
+    var color: Color {
+        switch self {
+        case .grocery: return Color(red: 0.95, green: 0.33, blue: 0.33)
+        case .work: return Color(red: 0.97, green: 0.58, blue: 0.02)
+        case .sport: return Color(red: 0.06, green: 0.71, blue: 0.35)
+        case .design: return Color(red: 0.0, green: 0.48, blue: 1.0)
+        case .university: return Color(red: 0.54, green: 0.0, blue: 1.0)
+        case .social: return Color(red: 0.91, green: 0.0, blue: 0.54)
+        case .music: return Color(red: 0.0, green: 0.78, blue: 0.81)
+        case .health: return Color(red: 0.0, green: 0.73, blue: 0.45)
+        case .movie: return Color(red: 0.85, green: 0.0, blue: 0.0)
+        case .home: return Color(red: 0.0, green: 0.47, blue: 0.99)
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .grocery: return "cart"
+        case .work: return "briefcase"
+        case .sport: return "figure.run"
+        case .design: return "paintbrush"
+        case .university: return "book"
+        case .social: return "person.2"
+        case .music: return "music.note"
+        case .health: return "heart"
+        case .movie: return "film"
+        case .home: return "house"
+        }
+    }
+}
+
+enum TaskPriority: Int, CaseIterable {
+    case low = 1
+    case medium = 2
+    case high = 3
+    case urgent = 4
+    
+    var title: String {
+        switch self {
+        case .low: return "Low"
+        case .medium: return "Medium"
+        case .high: return "High"
+        case .urgent: return "Urgent"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .low: return Color(red: 0.06, green: 0.71, blue: 0.35)
+        case .medium: return Color(red: 0.97, green: 0.58, blue: 0.02)
+        case .high: return Color(red: 0.95, green: 0.33, blue: 0.33)
+        case .urgent: return Color.red
+        }
+    }
+}
 
 class HomeViewModel: ObservableObject {
     @Published var items: [Item] = []
@@ -10,12 +79,81 @@ class HomeViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var taskDoneCount: Int = 0
     @Published var taskLeftCount: Int = 0
+    @Published var searchText: String = ""
+    @Published var isSearching: Bool = false
+    @Published var profileImageData: Data? = nil
+    @Published var userName: String = ""
+    @Published var selectedCategory: TaskCategory?
+    @Published var selectedPriority: TaskPriority?
     
     private let context: NSManagedObjectContext
+    
+    var filteredItems: [Item] {
+        if searchText.isEmpty {
+            return items
+        } else {
+            return items.filter { item in
+                let titleMatch = item.title?.localizedCaseInsensitiveContains(searchText) ?? false
+                let descriptionMatch = item.taskDescription?.localizedCaseInsensitiveContains(searchText) ?? false
+                return titleMatch || descriptionMatch
+            }
+        }
+    }
+    
+    var filteredNewItems: [Item] {
+        filteredItems.filter { !$0.completed }
+    }
+    
+    var filteredCompletedTasks: [Item] {
+        filteredItems.filter { $0.completed }
+    }
     
     init(context: NSManagedObjectContext) {
         self.context = context
         fetchItems()
+        fetchUserProfile()
+        
+        // Profil değişikliklerini dinle
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(profileUpdated),
+            name: .profileUpdated,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(profileUpdated),
+            name: .tasksUpdated,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func profileUpdated() {
+        DispatchQueue.main.async {
+            self.fetchUserProfile()
+        }
+    }
+    
+    func fetchUserProfile() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        if let profile = CoreDataManager.shared.fetchUserProfile(userId: userID) {
+            DispatchQueue.main.async {
+                self.userName = profile.userName
+            }
+        }
+        
+        // Profil fotoğrafını çek
+        if let imageData = CoreDataManager.shared.fetchProfileImage(userId: userID) {
+            DispatchQueue.main.async {
+                self.profileImageData = imageData
+            }
+        }
     }
     
     func fetchItems() {
@@ -58,16 +196,18 @@ class HomeViewModel: ObservableObject {
             )
         }
     
-    func addTask(title: String, description: String, date: Date?) {
-            let newItem = Item(context: context)
-            newItem.title = title
-            newItem.taskDescription = description
-            newItem.date = date ?? Date()
-            newItem.id = UUID()
-            newItem.completed = false
-            
-            saveContext()
-        }
+    func addTask(title: String, description: String, date: Date?, category: TaskCategory? = nil, priority: TaskPriority? = nil) {
+        let newItem = Item(context: context)
+        newItem.title = title
+        newItem.taskDescription = description
+        newItem.date = date ?? Date()
+        newItem.id = UUID()
+        newItem.completed = false
+        newItem.category = category?.rawValue
+        newItem.priority = Int16(priority?.rawValue ?? 0)
+        
+        saveContext()
+    }
 
     
     func deleteSingleTask(_ item: Item) {
@@ -75,9 +215,15 @@ class HomeViewModel: ObservableObject {
         saveContext()
     }
     
-    func editTask(item: Item, newTitle: String, newDescription: String) {
+    func editTask(item: Item, newTitle: String, newDescription: String, category: TaskCategory? = nil, priority: TaskPriority? = nil) {
         item.title = newTitle
         item.taskDescription = newDescription
+        if let category = category {
+            item.category = category.rawValue
+        }
+        if let priority = priority {
+            item.priority = Int16(priority.rawValue)
+        }
         saveContext()
     }
     
@@ -99,6 +245,7 @@ class HomeViewModel: ObservableObject {
 
 extension Notification.Name {
     static let tasksUpdated = Notification.Name("tasksUpdated")
+    static let profileUpdated = Notification.Name("profileUpdated")
 }
 
 

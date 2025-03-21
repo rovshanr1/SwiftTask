@@ -107,7 +107,10 @@ class ProfileViewModel: ObservableObject {
                     let targetSize = CGSize(width: maxDimension, height: maxDimension)
                     if let resizedImage = self.resizeImage(uiImage, to: targetSize) {
                         self.profileImageData = resizedImage.jpegData(compressionQuality: 0.8)
-                        CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: self.profileImageData!)
+                        if let imageData = self.profileImageData {
+                            CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: imageData)
+                            NotificationCenter.default.post(name: .profileUpdated, object: nil)
+                        }
                     }
                 }
                 self.isLoading = false
@@ -133,6 +136,7 @@ class ProfileViewModel: ObservableObject {
 
                 DispatchQueue.main.async {
                     self.profileImageData = imageData
+                    NotificationCenter.default.post(name: .profileUpdated, object: nil)
                 }
             }
         }
@@ -170,9 +174,9 @@ class ProfileViewModel: ObservableObject {
        
         DispatchQueue.main.async {
             self.profileImageData = nil
+            CoreDataManager.shared.deleteProfileImage(userId: userID)
+            NotificationCenter.default.post(name: .profileUpdated, object: nil)
         }
-        // Remove from CoreData
-        CoreDataManager.shared.deleteProfileImage(userId: userID)
     }
 
     

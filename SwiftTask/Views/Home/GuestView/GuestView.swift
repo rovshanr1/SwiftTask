@@ -16,7 +16,7 @@ struct GuestView: View {
             }
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $viewModel.showingSheet) {
-                AddTaskSheet(
+                GuestAddTaskSheet(
                     isPresented: $viewModel.showingSheet,
                     title: $viewModel.newTaskTitle,
                     description: $viewModel.newTaskDescription,

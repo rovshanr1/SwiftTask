@@ -29,12 +29,12 @@ struct TabBarView: View {
             .background(viewModel.tabBarBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .padding(.horizontal, 16)
-            // Add shadow for better visibility
             .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
             
             // Add Button
             addButton
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
     
     private var leftTabs: some View {
