@@ -3,6 +3,7 @@ import SwiftUI
 import FirebaseAuth
 
 enum TaskCategory: String, CaseIterable {
+    case all = "All"
     case grocery = "Grocery"
     case work = "Work"
     case sport = "Sport"
@@ -13,9 +14,13 @@ enum TaskCategory: String, CaseIterable {
     case health = "Health"
     case movie = "Movie"
     case home = "Home"
+    case personal = "Personal"
+    case shopping = "Shopping"
+    case others = "Others"
     
     var color: Color {
         switch self {
+        case .all: return .purple
         case .grocery: return Color(red: 0.95, green: 0.33, blue: 0.33)
         case .work: return Color(red: 0.97, green: 0.58, blue: 0.02)
         case .sport: return Color(red: 0.06, green: 0.71, blue: 0.35)
@@ -26,11 +31,15 @@ enum TaskCategory: String, CaseIterable {
         case .health: return Color(red: 0.0, green: 0.73, blue: 0.45)
         case .movie: return Color(red: 0.85, green: 0.0, blue: 0.0)
         case .home: return Color(red: 0.0, green: 0.47, blue: 0.99)
+        case .personal: return .green
+        case .shopping: return .orange
+        case .others: return .gray
         }
     }
     
     var icon: String {
         switch self {
+        case .all: return "list.bullet"
         case .grocery: return "cart"
         case .work: return "briefcase"
         case .sport: return "figure.run"
@@ -41,6 +50,9 @@ enum TaskCategory: String, CaseIterable {
         case .health: return "heart"
         case .movie: return "film"
         case .home: return "house"
+        case .personal: return "person"
+        case .shopping: return "bag"
+        case .others: return "ellipsis"
         }
     }
 }

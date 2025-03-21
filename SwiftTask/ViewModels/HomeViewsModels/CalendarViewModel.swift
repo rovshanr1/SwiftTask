@@ -18,30 +18,30 @@ class CalendarViewModel: ObservableObject {
     init(context: NSManagedObjectContext) {
         self.context = context
         fetchTasks()
+        
+        // Görev güncellemelerini dinle
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(tasksUpdated),
+            name: .tasksUpdated,
+            object: nil
+        )
     }
     
-    enum TaskCategory: String, CaseIterable {
-        case all = "All"
-        case work = "Work"
-        case personal = "Personal"
-        case shopping = "Shopping"
-        case health = "Health"
-        case others = "Others"
-        
-        var color: Color {
-            switch self {
-            case .all: return .purple
-            case .work: return .blue
-            case .personal: return .green
-            case .shopping: return .orange
-            case .health: return .red
-            case .others: return .gray
-            }
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func tasksUpdated() {
+        DispatchQueue.main.async {
+            self.fetchTasks()
+            self.objectWillChange.send()
         }
     }
     
     func fetchTasks() {
         let request = NSFetchRequest<Item>(entityName: "Item")
+        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
         
         do {
             tasks = try context.fetch(request)

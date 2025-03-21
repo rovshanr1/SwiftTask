@@ -34,10 +34,12 @@ struct CalendarView: View {
                 // Category Selector
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(CalendarViewModel.TaskCategory.allCases, id: \.self) { category in
+                        ForEach(TaskCategory.allCases, id: \.self) { category in
                             CategoryButton(
                                 category: category,
                                 isSelected: viewModel.selectedCategory == category,
+                                color: category.color,
+                                icon: category.icon,
                                 action: {
                                     withAnimation {
                                         viewModel.selectedCategory = category
@@ -107,31 +109,6 @@ struct CalendarView: View {
         .navigationDestination(isPresented: $navigateToFocus) {
             FocusView()
                 .navigationBarBackButtonHidden(true)
-        }
-    }
-}
-
-struct CategoryButton: View {
-    let category: CalendarViewModel.TaskCategory
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(category.rawValue)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .gray)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? category.color.opacity(0.2) : Color.clear)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? category.color : Color.clear, lineWidth: 1)
-                )
         }
     }
 }

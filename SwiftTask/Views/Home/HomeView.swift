@@ -65,7 +65,24 @@ struct HomeView: View {
                         isPresented: $showingSheet,
                         title: $newTaskTitle,
                         description: $newTaskDescription,
-                        onSave: saveTask
+                        selectedCategory: $viewModel.selectedCategory,
+                        selectedPriority: $viewModel.selectedPriority,
+                        onSave: {
+                            if !newTaskTitle.isEmpty {
+                                viewModel.addTask(
+                                    title: newTaskTitle,
+                                    description: newTaskDescription,
+                                    date: newDate,
+                                    category: viewModel.selectedCategory,
+                                    priority: viewModel.selectedPriority
+                                )
+                                newTaskTitle = ""
+                                newTaskDescription = ""
+                                newDate = Date()
+                                viewModel.selectedCategory = nil
+                                viewModel.selectedPriority = nil
+                            }
+                        }
                     )
                 }
             }
@@ -208,8 +225,14 @@ struct HomeView: View {
                         TaskRow(
                             item: item,
                             onDelete: { showDeleteAlert(for: item) },
-                            onEdit: { editedItem, newTitle, newDescription in
-                                viewModel.editTask(item: editedItem, newTitle: newTitle, newDescription: newDescription)
+                            onEdit: { editedItem, newTitle, newDescription, newCategory, newPriority in
+                                viewModel.editTask(
+                                    item: editedItem,
+                                    newTitle: newTitle,
+                                    newDescription: newDescription,
+                                    category: newCategory,
+                                    priority: newPriority
+                                )
                             },
                             onComplete: { item in
                                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -269,13 +292,15 @@ struct TaskHeaderView: View {
 struct TaskRow: View {
     let item: Item
     var onDelete: () -> Void
-    var onEdit: (Item, String, String) -> Void
+    var onEdit: (Item, String, String, TaskCategory?, TaskPriority?) -> Void
     var onComplete: (Item) -> Void
 
     @State private var isDescriptionVisible = false
     @State private var isEditing = false
     @State private var editedTitle = ""
     @State private var editedDescription = ""
+    @State private var selectedCategory: TaskCategory?
+    @State private var selectedPriority: TaskPriority?
     
     private var taskCategory: TaskCategory? {
         if let categoryString = item.category {
@@ -285,8 +310,9 @@ struct TaskRow: View {
     }
     
     private var taskPriority: TaskPriority? {
-        if item.priority > 0 {
-            return TaskPriority(rawValue: Int(item.priority))
+        let priorityValue = Int(item.priority)
+        if priorityValue > 0 {
+            return TaskPriority(rawValue: priorityValue)
         }
         return nil
     }
@@ -354,6 +380,8 @@ struct TaskRow: View {
             Button(action: {
                 editedTitle = item.title ?? ""
                 editedDescription = item.taskDescription ?? ""
+                selectedCategory = taskCategory
+                selectedPriority = taskPriority
                 isEditing = true
             }) {
                 Label("Edit", systemImage: "pencil")
@@ -363,7 +391,7 @@ struct TaskRow: View {
             }
         }
         .sheet(isPresented: $isEditing) {
-            ZStack{
+            ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 
@@ -371,8 +399,10 @@ struct TaskRow: View {
                     isPresented: $isEditing,
                     title: $editedTitle,
                     description: $editedDescription,
+                    selectedCategory: $selectedCategory,
+                    selectedPriority: $selectedPriority,
                     onSave: {
-                        onEdit(item, editedTitle, editedDescription)
+                        onEdit(item, editedTitle, editedDescription, selectedCategory, selectedPriority)
                         isEditing = false
                     }
                 )

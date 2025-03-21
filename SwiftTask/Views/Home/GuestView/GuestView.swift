@@ -110,19 +110,10 @@ struct GuestTaskRow: View {
                 Label("Delete", systemImage: "trash")
             }
         }
-        .sheet(isPresented: $isEditing) {
-            EditTaskSheet(
-                isPresented: $isEditing,
-                title: $editedTitle,
-                description: $editedDescription,
-                onSave: {
-                    onEdit(item, editedTitle, editedDescription)
-                    isEditing = false
-                }
-            )
+
         }
     }
-}
+
 
 // Basit bir geçici görev modeli
 struct TaskItem: Identifiable {
