@@ -5,44 +5,55 @@ struct ProfileView: View {
     @ObservedObject var homeViewModel: HomeViewModel
     @StateObject private var viewModel = ProfileViewModel()
     @State private var navigateToHome = false
-    @State private var navigateToProfile = false
-    @State private var navigateToIntroView = false
+    @State private var navigateToProfile = true
+    @State private var navigateToFocus = false
+    @State private var navigateToCalendar = false
     @State private var showingCustomModal = false
     @State private var userNameChanged = false
     @State private var showImagePicker = false
     @State private var showChangePasswordView = false
     @State private var newUserName = ""
+    @State private var isLoggedOut = false
 
-   
     var body: some View {
-        NavigationStack {
-            ZStack {
-                
-                Color(red: 0.07, green: 0.07, blue: 0.07)
-                    .ignoresSafeArea()
-                
-                VStack {
-                    profileViewContent()
-                    Spacer()
-                    TabBarView(
-                        navigateToHome: $navigateToHome,
-                        navigateToProfile: .constant(false),
-                        onAddTask: {}
-                    )
+        NavigationStack{
+            if isLoggedOut {
+                IntroView()
+                    .navigationBarBackButtonHidden(true)
+                    .interactiveDismissDisabled()
+            } else {
+                ZStack {
+                    Color(red: 0.07, green: 0.07, blue: 0.07)
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        profileViewContent()
+                        Spacer()
+                        TabBarView(
+                            navigateToHome: $navigateToHome,
+                            navigateToProfile: .constant(true),
+                            navigateToCalendar: $navigateToCalendar,
+                            navigateToFocus: $navigateToFocus,
+                            onAddTask: { /* Profile does not support adding tasks */ }
+                        )
+                    }
                 }
                 .navigationBarBackButtonHidden(true)
+                .navigationDestination(isPresented: $navigateToHome) {
+                    HomeView(context: PersistenceController.shared.viewContext)
+                        .navigationBarBackButtonHidden(true)
+                }
+                .navigationDestination(isPresented: $navigateToFocus) {
+                    FocusView()
+                        .navigationBarBackButtonHidden(true)
+                }
+                .navigationDestination(isPresented: $navigateToCalendar) {
+                    CalendarView(context: PersistenceController.shared.viewContext)
+                        .navigationBarBackButtonHidden(true)
+                }
             }
-            .navigationDestination(isPresented: $navigateToHome) {
-                HomeView(context: PersistenceController.shared.viewContext)
-            }
-            .navigationDestination(isPresented: $navigateToIntroView) {
-                IntroView()
-            }
-            
-
         }
-        .onAppear{
-            //Refresh Data when view appers
+        .onAppear {
             homeViewModel.fetchItems()
         }
     }
@@ -197,10 +208,9 @@ struct ProfileView: View {
                         }
                         .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
                         Section(header: Text("SwiftTask").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))){
-                            //Logout button
                             Button(action: {
                                 viewModel.logout()
-                                navigateToIntroView  = true
+                                isLoggedOut = true
                             }) {
                                 HStack{
                                     Image("logout")
@@ -222,6 +232,13 @@ struct ProfileView: View {
             }
         }
     }
+}
+
+enum NavigationDestination: Hashable {
+    case home
+    case focus
+    case calendar
+    case intro
 }
 
 

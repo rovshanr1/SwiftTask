@@ -9,6 +9,39 @@ class CoreDataManager {
         context = PersistenceController.shared.viewContext
     }
     
+    // MARK: - Clear All User Data
+    func clearUserData() {
+        // Profil verilerini sil
+        let profileRequest: NSFetchRequest<Profile> = Profile.fetchRequest()
+        do {
+            let profiles = try context.fetch(profileRequest)
+            for profile in profiles {
+                context.delete(profile)
+            }
+        } catch {
+            print("Error deleting profiles: \(error)")
+        }
+        
+        // Görevleri sil
+        let taskRequest: NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            let tasks = try context.fetch(taskRequest)
+            for task in tasks {
+                context.delete(task)
+            }
+        } catch {
+            print("Error deleting tasks: \(error)")
+        }
+        
+        // Değişiklikleri kaydet
+        do {
+            try context.save()
+            print("All user data cleared successfully")
+        } catch {
+            print("Error saving context after clearing data: \(error)")
+        }
+    }
+    
     // MARK: - Register or Update User Profile
     func saveUserProfile(userId: String, profile: ProfileModel) {
         let request: NSFetchRequest<Profile> = Profile.fetchRequest()

@@ -7,31 +7,15 @@
 import SwiftUI
 
 struct TabBarView: View {
+    @StateObject private var viewModel = TabBarViewModel()
     @Binding var navigateToHome: Bool
     @Binding var navigateToProfile: Bool
+    @Binding var navigateToCalendar: Bool
+    @Binding var navigateToFocus: Bool
     let onAddTask: () -> Void
     
     // Environment values for safe area
     @Environment(\.colorScheme) var colorScheme
-    
-    // Constants
-    private enum Constants {
-        static let tabBarHeight: CGFloat = 70
-        static let tabBarCornerRadius: CGFloat = 20
-        static let tabBarSpacing: CGFloat = 50
-        static let addButtonSize: CGFloat = 64
-        static let addButtonIconSize: CGFloat = 32
-        static let horizontalPadding: CGFloat = 20
-    }
-    
-    private var tabBarBackground: Color {
-        Color(red: 0.21, green: 0.21, blue: 0.21)
-            .opacity(0.8)
-    }
-    
-    private var addButtonColor: Color {
-        Color(red: 1.00, green: 0.44, blue: 0.14)
-    }
     
     var body: some View {
         ZStack {
@@ -41,9 +25,9 @@ struct TabBarView: View {
                 Spacer()
                 rightTabs
             }
-            .frame(height: Constants.tabBarHeight)
-            .background(tabBarBackground)
-            .clipShape(RoundedRectangle(cornerRadius: Constants.tabBarCornerRadius))
+            .frame(height: TabBarViewModel.Constants.tabBarHeight)
+            .background(viewModel.tabBarBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .padding(.horizontal, 16)
             // Add shadow for better visibility
             .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
@@ -54,80 +38,85 @@ struct TabBarView: View {
     }
     
     private var leftTabs: some View {
-        HStack(spacing: Constants.tabBarSpacing) {
-            
-//            TabButton(
-//                icon: "calendar",
-//                isSelected: false,
-//                action: { /* Calendar action */ }
-//            )
+        HStack(spacing: 20) {
+            TabButton(
+                icon: TabType.home.icon,
+                isSelected: navigateToHome,
+                action: {
+                    viewModel.handleTabSelection(
+                        navigateToHome: &navigateToHome,
+                        navigateToProfile: &navigateToProfile,
+                        navigateToCalendar: &navigateToCalendar,
+                        navigateToFocus: &navigateToFocus,
+                        selectedTab: .home
+                    )
+                }
+            )
             
             TabButton(
-                icon: "house",
-                isSelected: navigateToHome,
-                action: { navigateToHome = true }
+                icon: TabType.calendar.icon,
+                isSelected: navigateToCalendar,
+                action: {
+                    viewModel.handleTabSelection(
+                        navigateToHome: &navigateToHome,
+                        navigateToProfile: &navigateToProfile,
+                        navigateToCalendar: &navigateToCalendar,
+                        navigateToFocus: &navigateToFocus,
+                        selectedTab: .calendar
+                    )
+                }
             )
         }
-        .padding(.leading, Constants.horizontalPadding)
+        .padding(.leading, 20)
     }
     
     private var rightTabs: some View {
-        HStack(spacing: Constants.tabBarSpacing) {
+        HStack(spacing: 20) {
             TabButton(
-                icon: "person",
-                isSelected: navigateToProfile,
-                action: { navigateToProfile = true }
+                icon: TabType.focus.icon,
+                isSelected: navigateToFocus,
+                action: {
+                    viewModel.handleTabSelection(
+                        navigateToHome: &navigateToHome,
+                        navigateToProfile: &navigateToProfile,
+                        navigateToCalendar: &navigateToCalendar,
+                        navigateToFocus: &navigateToFocus,
+                        selectedTab: .focus
+                    )
+                }
             )
             
-//            TabButton(
-//                icon: "clock",
-//                isSelected: false,
-//                action: { /* Clock action */ }
-//            )
-           
+            TabButton(
+                icon: TabType.profile.icon,
+                isSelected: navigateToProfile,
+                action: {
+                    viewModel.handleTabSelection(
+                        navigateToHome: &navigateToHome,
+                        navigateToProfile: &navigateToProfile,
+                        navigateToCalendar: &navigateToCalendar,
+                        navigateToFocus: &navigateToFocus,
+                        selectedTab: .profile
+                    )
+                }
+            )
         }
-        .padding(.trailing, Constants.horizontalPadding)
+        .padding(.trailing, 20)
     }
     
     private var addButton: some View {
         Button(action: onAddTask) {
             Circle()
-                .frame(width: Constants.addButtonSize, height: Constants.addButtonSize)
-                .foregroundColor(addButtonColor)
+                .frame(width: TabBarViewModel.Constants.addButtonSize, height: TabBarViewModel.Constants.addButtonSize)
+                .foregroundColor(viewModel.addButtonColor)
                 .overlay(
                     Image(systemName: "plus")
-                        .font(.system(size: Constants.addButtonIconSize, weight: .bold))
+                        .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
                 )
-                .shadow(color: addButtonColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                .shadow(color: viewModel.addButtonColor.opacity(0.4), radius: 8, x: 0, y: 4)
         }
         .offset(y: -30)
         .accessibilityLabel("Add New Task")
-    }
-}
-
-// Extracted Tab Button for reusability
-struct TabButton: View {
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
-                .frame(width: 44, height: 44) // Better touch target
-                .background(
-                    isSelected ?
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 32, height: 32)
-                    : nil
-                )
-                .animation(.easeInOut, value: isSelected)
-        }
-        .accessibilityLabel(icon.capitalized)
     }
 }
 
@@ -135,6 +124,8 @@ struct TabButton: View {
     TabBarView(
         navigateToHome: .constant(false),
         navigateToProfile: .constant(false),
+        navigateToCalendar: .constant(false),
+        navigateToFocus: .constant(false),
         onAddTask: {}
     )
     .preferredColorScheme(.dark)

@@ -1,7 +1,6 @@
 import SwiftUI
 import CoreData
 
-
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
     @State private var showingSheet = false
@@ -11,6 +10,9 @@ struct HomeView: View {
     @State private var showingDeleteAlert = false
     @State private var itemToDelete: Item?
     @State private var navigateToProfile = false
+    @State private var navigateToCalendar = false
+    @State private var navigateToHome = true
+    @State private var navigateToFocus = false
     
     
     
@@ -25,11 +27,17 @@ struct HomeView: View {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
                 VStack {
-                    taskListView()
+                    if navigateToHome {
+                        taskListView()
+                    } else if navigateToFocus {
+                        FocusView()
+                    }
                     Spacer()
                     TabBarView(
-                        navigateToHome: .constant(false),
+                        navigateToHome: .constant(true),
                         navigateToProfile: $navigateToProfile,
+                        navigateToCalendar: $navigateToCalendar,
+                        navigateToFocus: $navigateToFocus,
                         onAddTask: { showingSheet = true }
                     )
                 }
@@ -62,6 +70,12 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $navigateToProfile) {
                 ProfileView(homeViewModel: viewModel)
+            }
+            .navigationDestination(isPresented: $navigateToCalendar){
+                CalendarView(context: PersistenceController.shared.viewContext)
+            }
+            .navigationDestination(isPresented: $navigateToFocus) {
+                FocusView()
             }
         }
     }

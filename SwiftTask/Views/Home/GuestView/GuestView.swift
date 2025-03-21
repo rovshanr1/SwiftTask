@@ -1,13 +1,7 @@
 import SwiftUI
 
 struct GuestView: View {
-    @State private var tasks: [TaskItem] = []  
-    @State private var showingSheet = false
-    @State private var newTaskTitle = ""
-    @State private var newTaskDescription = ""
-    @State private var showingDeleteAlert = false
-    @State private var itemToDelete: TaskItem?
-    @State private var navigateToProfile = false
+    @StateObject private var viewModel = GuestViewModel()
 
     var body: some View {
         NavigationStack {
@@ -17,57 +11,49 @@ struct GuestView: View {
                 VStack {
                     taskListView()
                     Spacer()
-                    TabBarView(
-                        navigateToHome: .constant(false),
-                        navigateToProfile: $navigateToProfile,
-                        onAddTask: { showingSheet = true }
-                    )
+                    GuestTabBarView(onAddTask: { viewModel.showingSheet = true })
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .sheet(isPresented: $showingSheet) {
+            .sheet(isPresented: $viewModel.showingSheet) {
                 AddTaskSheet(
-                    isPresented: $showingSheet,
-                    title: $newTaskTitle,
-                    description: $newTaskDescription,
-                    onSave: saveTask
+                    isPresented: $viewModel.showingSheet,
+                    title: $viewModel.newTaskTitle,
+                    description: $viewModel.newTaskDescription,
+                    onSave: viewModel.addTask
                 )
             }
-            .alert("Are you sure?", isPresented: $showingDeleteAlert) {
+            .alert("Are you sure?", isPresented: $viewModel.showingDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
-                    if let item = itemToDelete {
-                        tasks.removeAll { $0.id == item.id }
-                        itemToDelete = nil
+                    if let item = viewModel.itemToDelete {
+                        viewModel.deleteTask(item: item)
                     }
                 }
             }
-//            .navigationDestination(isPresented: $navigateToProfile) {
-//                ProfileView(homeViewModel: viewModel)
-//            }
+            .alert("Login Required", isPresented: $viewModel.showingLoginPrompt) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please create an account or login to access all features.")
+            }
         }
     }
 
     private func taskListView() -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if tasks.isEmpty {
+                if viewModel.tasks.isEmpty {
                     EmptyTaskView()
                 } else {
-                    ForEach(tasks) { item in
+                    ForEach(viewModel.tasks) { item in
                         GuestTaskRow(
                             item: item,
-                            onDelete: { showDeleteAlert(for: item) },
+                            onDelete: { viewModel.showDeleteAlert(for: item) },
                             onEdit: { editedItem, newTitle, newDescription in
-                                if let index = tasks.firstIndex(where: { $0.id == editedItem.id }) {
-                                    tasks[index].title = newTitle
-                                    tasks[index].description = newDescription
-                                }
+                                viewModel.editTask(item: editedItem, newTitle: newTitle, newDescription: newDescription)
                             },
                             onComplete: { item in
-                                if let index = tasks.firstIndex(where: { $0.id == item.id }) {
-                                    tasks[index].completed.toggle()
-                                }
+                                viewModel.toggleTaskCompletion(item: item)
                             }
                         )
                     }
@@ -75,20 +61,6 @@ struct GuestView: View {
             }
             .padding()
         }
-    }
-
-    private func saveTask() {
-        if !newTaskTitle.isEmpty {
-            let newTask = TaskItem(title: newTaskTitle, description: newTaskDescription)
-            tasks.append(newTask)
-            newTaskTitle = ""
-            newTaskDescription = ""
-        }
-    }
-    
-    private func showDeleteAlert(for item: TaskItem) {
-        itemToDelete = item
-        showingDeleteAlert = true
     }
 }
 
@@ -159,3 +131,4 @@ struct TaskItem: Identifiable {
     var description: String
     var completed: Bool = false
 }
+

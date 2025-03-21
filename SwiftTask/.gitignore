@@ -1,26 +1,58 @@
 # Xcode
 .DS_Store
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
 build/
 DerivedData/
-.idea/
-*.xcworkspace
-*.xcodeproj/project.xcworkspace
-*.xccheckout
-*.xcodeproj/xcuserdata/
-*.xcuserstate
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
 
-# Swift
-.build/
-*.swiftpm/xcode/package.xcworkspace
-
-# Pods
-Pods/
-
-# Personal files
-GoogleService-Info.plist
+# Info.plist
 Info.plist
+**/Info.plist
+*.plist
+GoogleService-Info.plist
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+.swiftpm/
 
-# Other
-*.env
-config.json
+# CocoaPods
+Pods/
+*.xcworkspace
 
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code Injection
+injectionforxcode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Temporary files
+*.swp
+*.swo
+*~ 
