@@ -45,5 +45,18 @@ class UserService {
         ]
         userRef.setData(userData, merge: true, completion: completion)
     }
+
+    func deleteUserProfile(userID: String, completion: ((Error?) -> Void)? = nil) {
+        let userRef = db.collection("users").document(userID)
+        userRef.delete { error in
+            if let error = error {
+                print("Error deleting user profile from Firestore: \(error.localizedDescription)")
+                completion?(error)
+            } else {
+                print("User profile successfully deleted from Firestore")
+                completion?(nil)
+            }
+        }
+    }
 }
 

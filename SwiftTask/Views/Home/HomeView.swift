@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var navigateToCalendar = false
     @State private var navigateToHome = true
     @State private var navigateToFocus = false
+    @State private var keyboardHeight: CGFloat = 0
     
     
     
@@ -26,14 +27,18 @@ struct HomeView: View {
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
+                
                 VStack(spacing: 0) {
                     if navigateToHome {
-                        VStack(spacing: 16) {
-                            headerView
-                            searchBar
-                            taskListView()
-                                .padding(.bottom, 90)
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                headerView
+                                searchBar
+                                taskListView()
+                            }
+                            .padding(.bottom, 90)
                         }
+                        .scrollDismissesKeyboard(.immediately)
                     } else if navigateToFocus {
                         FocusView()
                             .padding(.bottom, 90)
@@ -50,6 +55,7 @@ struct HomeView: View {
                         onAddTask: { showingSheet = true }
                     )
                 }
+                .ignoresSafeArea(.keyboard, edges: .bottom)
             }
             .navigationBarBackButtonHidden(true)
             .onAppear { viewModel.fetchItems() }
@@ -177,44 +183,42 @@ struct HomeView: View {
     }
 
     private func taskListView() -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if viewModel.filteredNewItems.isEmpty && viewModel.filteredCompletedTasks.isEmpty {
-                    if viewModel.isSearching {
-                        VStack(spacing: 16) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 48))
-                                .foregroundColor(.gray)
-                            Text("No matching tasks found")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 100)
-                    } else {
-                        EmptyTaskView()
+        VStack(alignment: .leading, spacing: 20) {
+            if viewModel.filteredNewItems.isEmpty && viewModel.filteredCompletedTasks.isEmpty {
+                if viewModel.isSearching {
+                    VStack(spacing: 16) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 48))
+                            .foregroundColor(.gray)
+                        Text("No matching tasks found")
+                            .font(.headline)
+                            .foregroundColor(.white)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 100)
                 } else {
-                    if !viewModel.filteredNewItems.isEmpty {
-                        taskSection(
-                            title: "New Task",
-                            isExpanded: $viewModel.isTodayExpanded,
-                            items: viewModel.filteredNewItems
-                        )
-                    }
+                    EmptyTaskView()
+                }
+            } else {
+                if !viewModel.filteredNewItems.isEmpty {
+                    taskSection(
+                        title: "New Task",
+                        isExpanded: $viewModel.isTodayExpanded,
+                        items: viewModel.filteredNewItems
+                    )
+                }
 
-                    if !viewModel.filteredCompletedTasks.isEmpty {
-                        taskSection(
-                            title: "Completed",
-                            isExpanded: $viewModel.isCompletedExpanded,
-                            items: viewModel.filteredCompletedTasks
-                        )
-                    }
+                if !viewModel.filteredCompletedTasks.isEmpty {
+                    taskSection(
+                        title: "Completed",
+                        isExpanded: $viewModel.isCompletedExpanded,
+                        items: viewModel.filteredCompletedTasks
+                    )
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical)
     }
 
     private func taskSection(title: String, isExpanded: Binding<Bool>, items: [Item]) -> some View {

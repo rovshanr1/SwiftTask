@@ -20,6 +20,9 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
+    @Published var isShowingDeleteAccountAlert = false
+    @Published var isShowingDeleteAccountConfirmation = false
+    @Published var deleteAccountError: String?
    
     private let context = PersistenceController.shared.viewContext
     
@@ -184,6 +187,45 @@ class ProfileViewModel: ObservableObject {
         try? Auth.auth().signOut()
         DispatchQueue.main.async {
             self.user = nil
+        }
+    }
+    
+    func deleteAccount(password: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let user = Auth.auth().currentUser, let email = user.email else {
+            completion(false, "User not found.")
+            return
+        }
+        
+        // Re-authenticate user before deletion
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        user.reauthenticate(with: credential) { [weak self] _, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                completion(false, "Authentication failed: \(error.localizedDescription)")
+                return
+            }
+            
+            // Delete user data from Firestore
+            let userId = user.uid // uid is already non-optional
+            UserService.shared.deleteUserProfile(userID: userId) { error in
+                if let error = error {
+                    print("Error deleting Firestore data: \(error.localizedDescription)")
+                }
+            }
+            
+            // Delete local data
+            CoreDataManager.shared.clearUserData()
+            
+            // Delete Firebase Auth account
+            user.delete { error in
+                if let error = error {
+                    completion(false, "Failed to delete account: \(error.localizedDescription)")
+                } else {
+                    completion(true, nil)
+                    self.logout()
+                }
+            }
         }
     }
 }

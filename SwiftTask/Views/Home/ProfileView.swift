@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showChangePasswordView = false
     @State private var newUserName = ""
     @State private var isLoggedOut = false
+    @State private var deleteAccountPassword = ""
 
     var body: some View {
         NavigationStack{
@@ -37,6 +38,7 @@ struct ProfileView: View {
                             onAddTask: { /* Profile does not support adding tasks */ }
                         )
                     }
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
                 }
                 .navigationBarBackButtonHidden(true)
                 .navigationDestination(isPresented: $navigateToHome) {
@@ -50,6 +52,30 @@ struct ProfileView: View {
                 .navigationDestination(isPresented: $navigateToCalendar) {
                     CalendarView(context: PersistenceController.shared.viewContext)
                         .navigationBarBackButtonHidden(true)
+                }
+                .alert("Delete Account", isPresented: $viewModel.isShowingDeleteAccountAlert) {
+                    SecureField("Enter your password", text: $deleteAccountPassword)
+                    Button("Cancel", role: .cancel) {
+                        deleteAccountPassword = ""
+                    }
+                    Button("Delete", role: .destructive) {
+                        viewModel.deleteAccount(password: deleteAccountPassword) { success, error in
+                            deleteAccountPassword = ""
+                            if success {
+                                isLoggedOut = true
+                            } else {
+                                viewModel.deleteAccountError = error
+                                viewModel.isShowingDeleteAccountConfirmation = true
+                            }
+                        }
+                    }
+                } message: {
+                    Text("This action cannot be undone. Please enter your password to confirm.")
+                }
+                .alert("Error", isPresented: $viewModel.isShowingDeleteAccountConfirmation) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text(viewModel.deleteAccountError ?? "An unknown error occurred")
                 }
             }
         }
@@ -206,6 +232,21 @@ struct ProfileView: View {
                             
                             }
                             
+                            // Delete Account Button
+                            Button(action: {
+                                viewModel.isShowingDeleteAccountAlert = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "person.crop.circle.badge.minus")
+                                        .foregroundStyle(.red)
+                                        .frame(width: 24, height: 24)
+                                    Text("Delete Account")
+                                        .foregroundStyle(.red)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(.red)
+                                }
+                            }
                         }
                         .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
                         Section(header: Text("SwiftTask").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))){

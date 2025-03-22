@@ -10,7 +10,7 @@ struct AddTaskSheet: View {
     var onSave: () -> Void
     
     private let mainCategories: [TaskCategory] = [.work, .personal, .home]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
     
     var body: some View {
         VStack(spacing: 20) {
@@ -18,6 +18,9 @@ struct AddTaskSheet: View {
                 .font(.title2)
                 .bold()
                 .foregroundStyle(.white)
+            
+            Divider().background(Color.gray)
+                .padding(8)
             
             ScrollView {
                 VStack(spacing: 16) {
@@ -59,8 +62,7 @@ struct AddTaskSheet: View {
                         }
                         
                         if !showAllCategories {
-                            // Ana kategoriler
-                            HStack(spacing: 12) {
+                            LazyVGrid(columns: columns, spacing: 8) {
                                 ForEach(mainCategories, id: \.self) { category in
                                     CategoryButton(
                                         category: category,
@@ -72,8 +74,7 @@ struct AddTaskSheet: View {
                                 }
                             }
                         } else {
-                            // Tüm kategoriler
-                            LazyVGrid(columns: columns, spacing: 12) {
+                            LazyVGrid(columns: columns, spacing: 8) {
                                 ForEach(TaskCategory.allCases, id: \.self) { category in
                                     if category != .all {
                                         CategoryButton(
@@ -95,7 +96,7 @@ struct AddTaskSheet: View {
                             .foregroundColor(.white)
                             .font(.headline)
                         
-                        HStack(spacing: 12) {
+                        LazyVGrid(columns: columns, spacing: 8) {
                             ForEach(TaskPriority.allCases, id: \.self) { priority in
                                 PriorityButton(
                                     priority: priority,
@@ -134,8 +135,9 @@ struct AddTaskSheet: View {
             .padding(.horizontal)
             .padding(.bottom)
         }
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
-        .presentationDetents([.large])
+        .cornerRadius(15)
+        .padding()
+        .presentationDetents([.medium, .large])
     }
 }
 
@@ -148,9 +150,13 @@ struct PriorityButton: View {
         Button(action: action) {
             Text(priority.title)
                 .foregroundColor(isSelected ? .white : priority.color)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity)
+                .font(.system(size: 12))
+                .fontWeight(isSelected ? .semibold : .regular)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .frame(height: 32)
                 .background(isSelected ? priority.color : priority.color.opacity(0.2))
                 .cornerRadius(4)
         }

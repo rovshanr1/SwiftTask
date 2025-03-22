@@ -61,14 +61,13 @@ enum TaskPriority: Int, CaseIterable {
     case low = 1
     case medium = 2
     case high = 3
-    case urgent = 4
     
     var title: String {
         switch self {
         case .low: return "Low"
         case .medium: return "Medium"
         case .high: return "High"
-        case .urgent: return "Urgent"
+       
         }
     }
     
@@ -77,7 +76,7 @@ enum TaskPriority: Int, CaseIterable {
         case .low: return Color(red: 0.06, green: 0.71, blue: 0.35)
         case .medium: return Color(red: 0.97, green: 0.58, blue: 0.02)
         case .high: return Color(red: 0.95, green: 0.33, blue: 0.33)
-        case .urgent: return Color.red
+        
         }
     }
 }

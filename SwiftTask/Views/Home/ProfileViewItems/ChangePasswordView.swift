@@ -49,7 +49,7 @@ struct ChangePasswordView: View {
                     .padding()
                     .frame(width: 352, height: 58)
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 5)
                             .stroke(Color.gray, lineWidth: 2)
                         )
                 

@@ -66,7 +66,7 @@ struct EditTaskSheet: View {
                         }
                         
                         if !showAllCategories {
-                            // Ana kategoriler
+                       
                             HStack(spacing: 12) {
                                 ForEach(mainCategories, id: \.self) { category in
                                     CategoryButton(
@@ -79,7 +79,7 @@ struct EditTaskSheet: View {
                                 }
                             }
                         } else {
-                            // Tüm kategoriler
+                         
                             LazyVGrid(columns: columns, spacing: 12) {
                                 ForEach(TaskCategory.allCases, id: \.self) { category in
                                     if category != .all {

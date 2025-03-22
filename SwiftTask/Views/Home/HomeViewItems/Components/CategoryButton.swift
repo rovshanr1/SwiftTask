@@ -23,20 +23,23 @@ struct CategoryButton<T: RawRepresentable & CaseIterable>: View where T.RawValue
     
     var body: some View {
         Button(action: action) {
-            HStack {
+            HStack(spacing: 4) {
                 if let icon = icon {
                     Image(systemName: icon)
                         .foregroundColor(isSelected ? .white : color)
+                        .font(.system(size: 12))
                 }
                 
                 Text(category.rawValue)
                     .foregroundColor(isSelected ? .white : color)
-                    .font(.subheadline)
+                    .font(.system(size: 12))
                     .fontWeight(isSelected ? .semibold : .regular)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .frame(height: 32)
             .background(isSelected ? color : color.opacity(0.2))
             .cornerRadius(4)
             .overlay(

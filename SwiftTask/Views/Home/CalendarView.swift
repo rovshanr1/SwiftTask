@@ -57,13 +57,17 @@ struct CalendarView: View {
                         ForEach(viewModel.getDaysInWeek(), id: \.self) { date in
                             DayView(
                                 date: date,
-                                isSelected: Calendar.current.isDate(date, inSameDayAs: viewModel.selectedDate)
-                            )
-                            .onTapGesture {
-                                withAnimation {
-                                    viewModel.selectedDate = date
+                                isSelected: Calendar.current.isDate(date, inSameDayAs: viewModel.selectedDate),
+                                hasCompletedTasks: viewModel.hasCompletedTasks(for: date),
+                                totalTasks: viewModel.totalTasks(for: date),
+                                onTap: {
+                                    if viewModel.selectedDate != date {
+                                        withAnimation {
+                                            viewModel.selectedDate = date
+                                        }
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                     .padding(.horizontal)
@@ -74,7 +78,9 @@ struct CalendarView: View {
                 ScrollView {
                     VStack(spacing: 15) {
                         ForEach(viewModel.tasksForDate(viewModel.selectedDate)) { task in
-                            TaskCardView(task: task)
+                            TaskCardView(task: task, onComplete: { task in
+                                viewModel.toggleTaskCompletion(task)
+                            })
                         }
                         
                         if viewModel.tasksForDate(viewModel.selectedDate).isEmpty {
@@ -113,34 +119,62 @@ struct CalendarView: View {
     }
 }
 
-struct DayView: View {
+struct DayView: View, Equatable {
     let date: Date
     let isSelected: Bool
-    @StateObject private var viewModel = CalendarViewModel(context: PersistenceController.shared.viewContext)
+    let hasCompletedTasks: Bool
+    let totalTasks: Int
+    let onTap: () -> Void
     
+    private static let weekDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+    
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter
+    }()
+
+    static func == (lhs: DayView, rhs: DayView) -> Bool {
+        return lhs.date == rhs.date && lhs.isSelected == rhs.isSelected
+    }
+
     var body: some View {
         VStack(spacing: 8) {
-            Text(viewModel.weekDay(date).uppercased())
+            Text(Self.weekDayFormatter.string(from: date).uppercased())
                 .font(.caption)
                 .foregroundColor(isSelected ? .white : .gray)
             
-            Text(viewModel.dayNumber(date))
+            Text(Self.dayFormatter.string(from: date))
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(isSelected ? .white : .gray)
+            
+            if totalTasks > 0 {
+                Text("\(hasCompletedTasks ? "✓" : "") \(totalTasks)")
+                    .font(.caption2)
+                    .foregroundColor(hasCompletedTasks ? .green : .gray)
+            }
         }
         .frame(width: 45, height: 80)
-        .background(isSelected ? Color.purple.opacity(0.3) : Color.clear)
+        .background(isSelected ? Color.orange.opacity(0.3) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.purple : Color.clear, lineWidth: 1)
+                .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1)
         )
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
 struct TaskCardView: View {
     let task: Item
+    let onComplete: (Item) -> Void
     
     var body: some View {
         HStack {
@@ -164,15 +198,19 @@ struct TaskCardView: View {
             
             Spacer()
             
-            Circle()
-                .stroke(lineWidth: 1.5)
-                .frame(width: 20, height: 20)
-                .foregroundColor(task.completed ? .green : .gray)
-                .overlay(
-                    Image(systemName: "checkmark")
-                        .font(.caption)
-                        .foregroundColor(task.completed ? .green : .clear)
-                )
+            Button(action: {
+                onComplete(task)
+            }) {
+                Circle()
+                    .stroke(lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(task.completed ? .green : .gray)
+                    .overlay(
+                        Image(systemName: "checkmark")
+                            .font(.caption)
+                            .foregroundColor(task.completed ? .green : .clear)
+                    )
+            }
         }
         .padding()
         .background(Color(red: 0.21, green: 0.21, blue: 0.21).opacity(0.3))
