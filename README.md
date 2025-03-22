@@ -44,7 +44,7 @@ SwiftTask is a comprehensive task management and focus application built with Sw
 ## Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/SwiftTask.git
+git clone https://github.com/rovshanr1/SwiftTask.git
 ```
 
 2. Open SwiftTask.xcodeproj in Xcode
