@@ -111,9 +111,8 @@ struct GuestTaskRow: View {
             }
         }
 
-        }
     }
-
+}
 
 // Basit bir geçici görev modeli
 struct TaskItem: Identifiable {

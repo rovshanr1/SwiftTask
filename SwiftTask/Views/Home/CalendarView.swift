@@ -24,12 +24,12 @@ struct CalendarView: View {
             Color(red: 0.07, green: 0.07, blue: 0.07)
                 .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                Text(viewModel.formattedDate(viewModel.selectedDate))
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            VStack() {
+                Text("Calendar")
+                    .font(.title)
                     .foregroundColor(.white)
-                    .padding(.top)
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
                 
                 // Category Selector
                 ScrollView(.horizontal, showsIndicators: false) {

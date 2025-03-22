@@ -230,9 +230,7 @@ class HomeViewModel: ObservableObject {
     func editTask(item: Item, newTitle: String, newDescription: String, category: TaskCategory? = nil, priority: TaskPriority? = nil) {
         item.title = newTitle
         item.taskDescription = newDescription
-        if let category = category {
-            item.category = category.rawValue
-        }
+        item.category = category?.rawValue
         if let priority = priority {
             item.priority = Int16(priority.rawValue)
         }

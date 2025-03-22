@@ -225,14 +225,8 @@ struct HomeView: View {
                         TaskRow(
                             item: item,
                             onDelete: { showDeleteAlert(for: item) },
-                            onEdit: { editedItem, newTitle, newDescription, newCategory, newPriority in
-                                viewModel.editTask(
-                                    item: editedItem,
-                                    newTitle: newTitle,
-                                    newDescription: newDescription,
-                                    category: newCategory,
-                                    priority: newPriority
-                                )
+                            onEdit: { editedItem, newTitle, newDescription, category, priority in
+                                viewModel.editTask(item: editedItem, newTitle: newTitle, newDescription: newDescription)
                             },
                             onComplete: { item in
                                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -380,8 +374,6 @@ struct TaskRow: View {
             Button(action: {
                 editedTitle = item.title ?? ""
                 editedDescription = item.taskDescription ?? ""
-                selectedCategory = taskCategory
-                selectedPriority = taskPriority
                 isEditing = true
             }) {
                 Label("Edit", systemImage: "pencil")
@@ -389,6 +381,10 @@ struct TaskRow: View {
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
             }
+        }
+        .onAppear {
+            selectedCategory = taskCategory
+            selectedPriority = taskPriority
         }
         .sheet(isPresented: $isEditing) {
             ZStack {

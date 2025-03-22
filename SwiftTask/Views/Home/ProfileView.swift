@@ -68,9 +68,10 @@ struct ProfileView: View {
                 if let user = viewModel.user {
                     VStack{
                         Text("Profile")
-                          .font(.title)
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.center)
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding(.top, 20)
+                            .padding(.bottom, 10)
                         // Profile Image
                         if let imageData = viewModel.profileImageData, let uiImage = UIImage(data: imageData) {
                             Image(uiImage: uiImage)

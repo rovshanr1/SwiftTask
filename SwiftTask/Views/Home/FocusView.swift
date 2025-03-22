@@ -22,7 +22,7 @@ struct FocusView: View {
             
             VStack(spacing: 0) {
                 Text("Focus Mode")
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.title)
                     .foregroundColor(.white)
                     .padding(.top, 20)
                     .padding(.bottom, 10)
@@ -31,9 +31,7 @@ struct FocusView: View {
                     focusContent()
                         .padding(.bottom, 90)
                 }
-            }
-            
-            VStack {
+                
                 Spacer()
                 TabBarView(
                     navigateToHome: $navigateToHome,
@@ -69,8 +67,11 @@ struct FocusView: View {
             
             VStack(spacing: 20) {
                 Text("Select Duration")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                
+                Divider().background(Color.gray)
+                    .padding(8)
                 
                 ForEach(viewModel.timerOptions, id: \.minutes) { option in
                     Button(action: {
@@ -94,8 +95,9 @@ struct FocusView: View {
                 .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
                 .padding(.top)
             }
+            .cornerRadius(15)
             .padding()
-            .presentationDetents([.height(400)])
+            .presentationDetents([.medium, .large])
         }
     }
     
