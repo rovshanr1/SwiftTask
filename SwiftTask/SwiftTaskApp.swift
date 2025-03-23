@@ -15,18 +15,38 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
-    @main
-    struct SwiftTaskApp: App {
-        let persistenceController = PersistenceController.shared
-        
-        // register app delegate for Firebase setup
-        @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-       
-        var body: some Scene {
-            WindowGroup {
-                LaunchView()
-                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+
+@main
+struct SwiftTaskApp: App {
+    let persistenceController = PersistenceController.shared
+    
+    // register app delegate for Firebase setup
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
+    // State variables to control view flow
+    @AppStorage("isLaunchViewCompleted") private var isLaunchViewCompleted: Bool = false
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+    
+    var body: some Scene {
+        WindowGroup {
+            Group {
+                if isLoggedIn {
+                    HomeView(context: persistenceController.viewContext)
+                        .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                } else {
+                    if !isLaunchViewCompleted {
+                        LaunchView()
+                            .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    }
+                     else {
+                        IntroView()
+                            .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    }
+                }
             }
+            .animation(.easeInOut, value: isLaunchViewCompleted)
+            .animation(.easeInOut, value: isLoggedIn)
         }
     }
+}
 

@@ -33,16 +33,19 @@ class LoginViewModel: ObservableObject {
                 
                 if let error = error {
                     self?.error = error.localizedDescription
+                    UserDefaults.standard.set(false, forKey: "isLoggedIn")
                     completion(false)
                     return
                 }
                 
                 if let user = result?.user, !user.isEmailVerified {
                     self?.error = "Please verify your email before logging in."
+                    UserDefaults.standard.set(false, forKey: "isLoggedIn")
                     completion(false)
                     return
                 }
                 
+                UserDefaults.standard.set(true, forKey: "isLoggedIn")
                 completion(true)
             }
         }

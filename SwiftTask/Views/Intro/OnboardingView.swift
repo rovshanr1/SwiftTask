@@ -24,16 +24,19 @@ struct OnboardingView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(height: 300)
+                            .accessibilityIdentifier("OnboardingImage\(index)")
                         
                         Text(item.title)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.white)
+                            .accessibilityIdentifier("OnboardingTitle\(index)")
                         
                         Text(item.description)
                             .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 32)
+                            .accessibilityIdentifier("OnboardingDescription\(index)")
                         
                         if index == viewModel.isOnboardingItems.count - 1 {
                             Button("Get Started"){
@@ -44,16 +47,17 @@ struct OnboardingView: View {
                             .background(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .cornerRadius(10)
                             .padding(.top, 20)
-                                     }
+                            .accessibilityIdentifier("GetStartedButton")
+                        }
                     }
                     .tag(index)
-                    
+                    .accessibilityIdentifier("OnboardingPage\(index)")
                 }
-                
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
             .background(Color(red: 0.07, green: 0.07, blue: 0.07).ignoresSafeArea())
         }
+        .accessibilityIdentifier("OnboardingView")
     }
 }
 

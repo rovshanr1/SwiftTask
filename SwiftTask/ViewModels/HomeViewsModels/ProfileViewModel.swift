@@ -187,6 +187,8 @@ class ProfileViewModel: ObservableObject {
         try? Auth.auth().signOut()
         DispatchQueue.main.async {
             self.user = nil
+            UserDefaults.standard.set(false, forKey: "isLoggedIn")
+            CoreDataManager.shared.clearUserData()
         }
     }
     

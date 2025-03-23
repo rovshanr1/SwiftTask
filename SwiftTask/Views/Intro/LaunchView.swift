@@ -4,48 +4,33 @@ import FirebaseAuth
 struct LaunchView: View {
     @StateObject private var viewModel = LaunchViewModel()
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+    @AppStorage("isLaunchViewCompleted") private var isLaunchViewCompleted: Bool = false
+    @State private var isAnimating = false
     
     // Animation properties
     private enum AnimationConstants {
         static let duration: Double = 1.0
-        static let splashDuration: Double = 2.0
-        static let initialScale: CGFloat = 0.5
+        static let splashDuration: Double = 2.5
+        static let initialScale: CGFloat = 0.3
         static let finalScale: CGFloat = 1.0
         static let initialOpacity: Double = 0.0
         static let finalOpacity: Double = 1.0
     }
     
     var body: some View {
-        Group {
-            if viewModel.animationCompleted {
-                mainContent
-            } else {
-                splashContent
-            }
-        }
-        .animation(.easeOut(duration: AnimationConstants.duration), value: viewModel.animationCompleted)
-    }
-    
-    private var mainContent: some View {
-        Group {
-            if isLoggedIn {
-                HomeView(context: PersistenceController.shared.viewContext)
-                    .transition(.opacity)
-            } else {
-                IntroView()
-                    .transition(.opacity)
-            }
-        }
-    }
-    
-    private var splashContent: some View {
         ZStack {
             backgroundColor
             
             logoContent
+                .scaleEffect(isAnimating ? AnimationConstants.finalScale : AnimationConstants.initialScale)
+                .opacity(isAnimating ? AnimationConstants.finalOpacity : AnimationConstants.initialOpacity)
                 .onAppear {
                     startLaunchSequence()
                 }
+        }
+        .accessibilityIdentifier("LaunchView")
+        .onAppear {
+            print("LaunchView appeared")
         }
     }
     
@@ -55,16 +40,11 @@ struct LaunchView: View {
     }
     
     private var logoContent: some View {
-        Image("SwigtTaskLogo")
+        Image("SwiftTaskLogo")
             .resizable()
             .scaledToFit()
             .frame(width: 300, height: 300)
-            .scaleEffect(viewModel.animationCompleted ?
-                        AnimationConstants.finalScale :
-                        AnimationConstants.initialScale)
-            .opacity(viewModel.animationCompleted ?
-                    AnimationConstants.finalOpacity :
-                    AnimationConstants.initialOpacity)
+            .accessibilityIdentifier("SwiftTaskLogo")
     }
     
     private func startLaunchSequence() {
@@ -74,15 +54,15 @@ struct LaunchView: View {
         // Update logged in state based on auth check
         isLoggedIn = viewModel.authState == .authenticated
         
-        // Animate logo
+        // Animate logo appearance
         withAnimation(.easeOut(duration: AnimationConstants.duration)) {
-            viewModel.animationCompleted = true
+            isAnimating = true
         }
         
-        // Transition to main content after delay
+        // Wait for animation and then complete launch view
         DispatchQueue.main.asyncAfter(deadline: .now() + AnimationConstants.splashDuration) {
-            withAnimation {
-                viewModel.animationCompleted = true
+            withAnimation(.easeOut(duration: AnimationConstants.duration)) {
+                isLaunchViewCompleted = true
             }
         }
     }
