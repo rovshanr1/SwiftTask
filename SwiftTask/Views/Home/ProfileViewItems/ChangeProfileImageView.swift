@@ -18,92 +18,119 @@ struct ChangeProfileImageView: View {
     @State private var showDeleteAlert = false
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
+            // Header
             Text("Change Profile Image")
-                .font(.headline)
+                .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            Divider().background(Color.gray)
-                .padding(8)
-            if let selectedImage = selectedImage ?? UIImage(data: viewModel.profileImageData ?? Data()) {
+            // Profile Image Preview
+            VStack(spacing: 20) {
+                if let selectedImage = selectedImage ?? UIImage(data: viewModel.profileImageData ?? Data()) {
                     Image(uiImage: selectedImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 100, height: 100)
+                        .frame(width: 120, height: 120)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                        .shadow(radius: 5)
+                        .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                        .shadow(radius: 10)
                 } else {
                     Image(systemName: "person.circle.fill")
                         .resizable()
                         .scaledToFill()
                         .foregroundStyle(.white)
-                        .frame(width: 100, height: 100)
+                        .frame(width: 120, height: 120)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                        .shadow(radius: 5)
+                        .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
+                        .shadow(radius: 10)
                 }
-            
+                
+                Text("Upload a photo of yourself")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.gray)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
 
-            HStack {
+            // Action Buttons
+            VStack(spacing: 12) {
                 PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
-                    Text("Choose Photos")
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .frame(width: 153, height: 48)
+                    HStack {
+                        Image(systemName: "photo.fill")
+                        Text("Choose from Library")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 1.00, green: 0.44, blue: 0.14),
+                                Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
                 }
                 .onChange(of: selectedItem) {
-                    Task{
-                        if let selectedItem, let data = try? await selectedItem.loadTransferable(type: Data.self) {
-                            if let image = UIImage(data: data) {
-                                selectedImage = image
-                                viewModel.updateProfileImage(image)
-                            }
+                    Task {
+                        if let selectedItem,
+                           let data = try? await selectedItem.loadTransferable(type: Data.self),
+                           let image = UIImage(data: data) {
+                            selectedImage = image
+                            viewModel.updateProfileImage(image)
                         }
                     }
                 }
 
-
-                Button(action: {
-                    showingCamera = true
-                }) {
-                    Text("Take Photo")
-                        .foregroundStyle(.white)
-                        .frame(width: 153, height: 48)
-                        .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .cornerRadius(10)
+                Button(action: { showingCamera = true }) {
+                    HStack {
+                        Image(systemName: "camera.fill")
+                        Text("Take Photo")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .cornerRadius(12)
+                }
+                
+                if selectedImage != nil || viewModel.profileImageData != nil {
+                    Button(action: { showDeleteAlert = true }) {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                            Text("Remove Photo")
+                        }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .cornerRadius(12)
+                    }
+                    .transition(.opacity)
                 }
             }
-            VStack{
-                if selectedImage != nil || viewModel.profileImageData != nil{
-                       Button(action: {
-                           showDeleteAlert = true
-                       }) {
-                           Text("Remove Photo")
-                               .foregroundStyle(.white)
-                               .frame(width: 153, height: 48)
-                               .background(Color.red)
-                               .cornerRadius(10)
-                       }
-                       .transition(.opacity)
-                       .alert(isPresented: $showDeleteAlert){
-                           Alert(
-                            title: Text("Are you sure?"),
-                            message: Text("Are you sure you want to delete your profile photo?"),
-                            primaryButton: .destructive(Text("Delete")) {
-                                selectedImage = nil
-                                viewModel.removeProfileImage()
-                            }, secondaryButton: .cancel()
-                           )
-                       }
-                   }
-            }
-
         }
-        .cornerRadius(15)
-        .padding()
-        .presentationDetents([.medium, .large])
+        .padding(24)
+        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .presentationDetents([.height(500)])
         .sheet(isPresented: $showingCamera) {
             ImagePicker(selectedImage: $selectedImage, viewModel: viewModel)
+        }
+        .alert("Delete Photo", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                selectedImage = nil
+                viewModel.removeProfileImage()
+            }
+        } message: {
+            Text("Are you sure you want to delete your profile photo?")
         }
     }
 }

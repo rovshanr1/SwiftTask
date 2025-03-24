@@ -239,30 +239,8 @@ struct HomeView: View {
 
 
 
-struct LoadingView: View {
-    var body: some View {
-        ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-            .scaleEffect(1.5)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black.opacity(0.3))
-    }
-}
 
-struct EmptySearchView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(.gray)
-            Text("No matching tasks found")
-                .font(.headline)
-                .foregroundColor(.white)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 100)
-    }
-}
+
 
 struct TaskSectionView: View {
     let title: String

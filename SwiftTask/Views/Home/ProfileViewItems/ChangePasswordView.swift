@@ -17,79 +17,84 @@ struct ChangePasswordView: View {
     @ObservedObject var viewModel: ProfileViewModel
 
     var body: some View {
-            VStack(spacing: 20) {
+        VStack(spacing: 24) {
+            // Header
+            Text("Change Password")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Password Fields
+            VStack(spacing: 16) {
+                PasswordField(
+                    title: "Current Password",
+                    text: $currentPassword,
+                    placeholder: "Enter current password"
+                )
                 
-                Text("Change account password")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-
-                Divider().background(Color.gray)
-                    .padding(8)
+                PasswordField(
+                    title: "New Password",
+                    text: $newPassword,
+                    placeholder: "Enter new password"
+                )
                 
-                SecureField("Current Password", text: $currentPassword)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(width: 352, height: 58)
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(Color.gray, lineWidth: 2)
-                        )
-                
-                SecureField("New Password", text: $newPassword)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(width: 352, height: 58)
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(Color.gray, lineWidth: 2)
-                        )
-                
-                SecureField("Save", text: $confirmNewPassword)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(width: 352, height: 58)
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(Color.gray, lineWidth: 2)
-                        )
-                
-                
-                HStack(spacing: 20){
-                    Button(action: {
-                        dismiss()
-                    }){
-                        Text("Cacnel")
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .frame(width: 153, height: 48)
-                    }
-                    
-                    if let errorMessage = errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding()
-                    }
-                    
+                PasswordField(
+                    title: "Confirm Password",
+                    text: $confirmNewPassword,
+                    placeholder: "Confirm new password"
+                )
+            }
+            
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .font(.system(size: 14))
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
+            Spacer()
+            
+            // Action Buttons
+            VStack(spacing: 12) {
+                Button(action: changePassword) {
                     if isLoading {
                         ProgressView()
-                            .padding()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
-                        Button(action: changePassword) {
-                            Text("Change Password")
-                                .foregroundStyle(.white)
-                                .frame(width: 153, height: 48)
-                                .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .cornerRadius(5)
-                        }
-                        .padding()
+                        Text("Save Changes")
+                            .font(.system(size: 16, weight: .semibold))
                     }
                 }
-            }
-            .cornerRadius(15)
-            .padding()
-            
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 1.00, green: 0.44, blue: 0.14),
+                            Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+                .disabled(isLoading)
                 
-            
+                Button(action: { dismiss() }) {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                }
+                .disabled(isLoading)
+            }
         }
+        .padding(24)
+        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .presentationDetents([.height(500)])
+    }
 
     private func changePassword() {
         guard !currentPassword.isEmpty, !newPassword.isEmpty, !confirmNewPassword.isEmpty else {
@@ -112,6 +117,33 @@ struct ChangePasswordView: View {
             } else {
                 errorMessage = error ?? "An error occurred. Please try again."
             }
+        }
+    }
+}
+
+struct PasswordField: View {
+    let title: String
+    @Binding var text: String
+    let placeholder: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundStyle(.gray)
+            
+            SecureField("", text: $text, prompt: Text(placeholder)
+                .foregroundStyle(.gray))
+                .foregroundColor(.white)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 0.21, green: 0.21, blue: 0.21))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
         }
     }
 }
