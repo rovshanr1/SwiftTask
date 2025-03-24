@@ -1,0 +1,106 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+*.swp
+*.swo
+*~
+
+# Xcode
+## User settings
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+## Build and Derived Data
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+.swiftpm/
+xcuserdata/
+*.xcodeproj
+.swiftpm
+
+# CocoaPods
+Pods/
+Podfile.lock
+*.xcworkspace
+!default.xcworkspace
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts
+
+# Firebase
+GoogleService-Info.plist
+firebase_app_id_file.json
+firebase.json
+
+# Configuration Files
+*.plist
+!Info.plist
+Config.swift
+Configuration.swift
+Secrets.swift
+APIKeys.swift
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+fastlane/derived_data
+fastlane/metadata
+
+# Code Injection
+injectionforxcode/
+
+# IDE
+.idea/
+.vscode/
+*.swiftpm
+*.playground
+*.xccheckout
+*.xcscmblueprint
+
+# Test & Coverage
+*.gcno
+*.gcda
+*.gcov
+*.coverage.txt
+coverage/
+
+# Other
+*.log
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+node_modules/ 
