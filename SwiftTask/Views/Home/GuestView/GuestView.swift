@@ -2,19 +2,70 @@ import SwiftUI
 
 struct GuestView: View {
     @StateObject private var viewModel = GuestViewModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var showLoginPrompt = false
+    @State private var navigateToIntro = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(red: 0.07, green: 0.07, blue: 0.07)
                     .ignoresSafeArea()
+                
                 VStack {
+                    // Limited Usage Mode
+                    VStack(spacing: 8) {
+                        Text("Limited Usage Mode")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Text("Create an account or log in to access all features.")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: {
+                            navigateToIntro = true
+                        }) {
+                            Text("Login")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 120, height: 36)
+                                .background(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .cornerRadius(5)
+                        }
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                    .padding(.top)
+                    
                     taskListView()
                     Spacer()
                     GuestTabBarView(onAddTask: { viewModel.showingSheet = true })
                 }
             }
             .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        navigateToIntro = true
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                    }
+                    .accessibilityIdentifier("BackButton")
+                }
+                
+                ToolbarItem(placement: .principal) {
+                    Text("Guest Mode")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+            }
             .sheet(isPresented: $viewModel.showingSheet) {
                 GuestAddTaskSheet(
                     isPresented: $viewModel.showingSheet,
@@ -35,6 +86,9 @@ struct GuestView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Please create an account or login to access all features.")
+            }
+            .fullScreenCover(isPresented: $navigateToIntro) {
+                IntroView()
             }
         }
     }

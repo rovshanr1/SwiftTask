@@ -17,57 +17,63 @@ struct LaunchView: View {
         static let finalOpacity: Double = 1.0
     }
     
+    // Environment check for testing
+    @Environment(\.isTestingEnvironment) private var isTestingEnvironment
+    
+    private var animationDuration: Double {
+        isTestingEnvironment ? 0.0 : AnimationConstants.duration
+    }
+    
+    private var splashDuration: Double {
+        isTestingEnvironment ? 0.0 : AnimationConstants.splashDuration
+    }
+    
     var body: some View {
         ZStack {
-            backgroundColor
+            // Background color
+            Color(red: 0.07, green: 0.07, blue: 0.07)
+                .ignoresSafeArea()
             
-            logoContent
+            // Logo content
+            Image("SwiftTaskLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 300, height: 300)
                 .scaleEffect(isAnimating ? AnimationConstants.finalScale : AnimationConstants.initialScale)
                 .opacity(isAnimating ? AnimationConstants.finalOpacity : AnimationConstants.initialOpacity)
-                .onAppear {
-                    startLaunchSequence()
-                }
+                .accessibilityIdentifier("SwiftTaskLogo")
         }
         .accessibilityIdentifier("LaunchView")
         .onAppear {
-            print("LaunchView appeared")
+            print("DEBUG: LaunchView appeared")
+            startLaunchSequence()
         }
-    }
-    
-    private var backgroundColor: some View {
-        Color(red: 0.07, green: 0.07, blue: 0.07)
-            .ignoresSafeArea()
-    }
-    
-    private var logoContent: some View {
-        Image("SwiftTaskLogo")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 300, height: 300)
-            .accessibilityIdentifier("SwiftTaskLogo")
     }
     
     private func startLaunchSequence() {
-        // Start authentication check
-        viewModel.checkAuthStatus()
+        print("DEBUG: Starting launch sequence")
         
-        // Update logged in state based on auth check
-        isLoggedIn = viewModel.authState == .authenticated
-        
-        // Animate logo appearance
-        withAnimation(.easeOut(duration: AnimationConstants.duration)) {
+        // Start logo animation immediately
+        withAnimation(.easeOut(duration: animationDuration)) {
             isAnimating = true
         }
         
-        // Wait for animation and then complete launch view
-        DispatchQueue.main.asyncAfter(deadline: .now() + AnimationConstants.splashDuration) {
-            withAnimation(.easeOut(duration: AnimationConstants.duration)) {
+        // Perform auth check asynchronously
+        Task {
+            await viewModel.checkAuthStatus()
+            
+            // Wait for splash duration and complete launch sequence
+            try? await Task.sleep(nanoseconds: UInt64(splashDuration * 1_000_000_000))
+            
+            withAnimation(.easeOut(duration: animationDuration)) {
+                print("DEBUG: Completing launch sequence")
+                isLoggedIn = viewModel.authState == .authenticated
                 isLaunchViewCompleted = true
             }
         }
     }
 }
 
-#Preview {
-    LaunchView()
-}
+//#Preview {
+//    LaunchView()
+//}

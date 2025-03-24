@@ -16,7 +16,11 @@ final class SwiftTaskUITests: XCTestCase {
         
         // Set up UI testing environment
         app.launchArguments = ["UI-Testing"]
-        app.launchEnvironment = ["UITESTING": "1"]
+        app.launchEnvironment = [
+            "UITESTING": "1",
+            "animations": "0", // Disable animations during testing
+            "DISABLE_ANIMATIONS": "true"
+        ]
         
         // Launch the app
         app.launch()
@@ -31,13 +35,15 @@ final class SwiftTaskUITests: XCTestCase {
 
     // MARK: - Helper Methods
     private func waitForSplashScreenAndAnimation() {
-        print("\nWaiting for splash screen and animations...")
-        sleep(5)
+        // Total wait time: animation duration (1.0s) + splash duration (2.5s) + transition (1.0s)
+        let totalWaitTime: TimeInterval = 5.0
+        sleep(UInt32(totalWaitTime))
     }
     
     private func waitForContentAnimation() {
-        print("\nWaiting for content animation...")
-        sleep(2)
+        // Wait for content delay (0.5s) + animation duration (0.5s)
+        let totalWaitTime: TimeInterval = 2.0
+        sleep(UInt32(totalWaitTime))
     }
     
     private func skipOnboardingIfPresent() {
@@ -142,9 +148,40 @@ final class SwiftTaskUITests: XCTestCase {
         print("\n=== Starting Initial Launch Test ===")
         
         // First verify LaunchView and logo
+        sleep(2)
         print("\nLooking for LaunchView...")
         let launchView = app.otherElements["LaunchView"]
-        XCTAssertTrue(launchView.waitForExistence(timeout: 10), "LaunchView should be visible")
+        
+        // Print all available accessibility identifiers
+        print("\nAvailable accessibility identifiers:")
+        for element in app.otherElements.allElementsBoundByIndex {
+            print("Element: \(element.debugDescription)")
+            print("Identifier: \(element.identifier)")
+        }
+        
+        // Try different queries
+        let launchViewQuery = app.otherElements.matching(identifier: "LaunchView")
+        print("DEBUG: LaunchView query count: \(launchViewQuery.count)")
+        
+        // Wait longer for LaunchView
+        let exists = launchView.waitForExistence(timeout: 5)
+        XCTAssertTrue(exists, "LaunchView should be visible")
+        
+        if !exists {
+            // Print view hierarchy for debugging
+            print("\nView hierarchy:")
+            print(app.debugDescription)
+            
+            // Print all elements for debugging
+            print("\nAll elements in hierarchy:")
+            app.otherElements.allElementsBoundByIndex.forEach { element in
+                print("Type: \(element.elementType)")
+                print("Label: \(element.label)")
+                print("Identifier: \(element.identifier)")
+                print("Frame: \(element.frame)")
+                print("---")
+            }
+        }
         
         print("\nLooking for LaunchView logo...")
         let launchLogo = app.images["SwiftTaskLogo"]
@@ -313,6 +350,16 @@ final class SwiftTaskUITests: XCTestCase {
         let guestView = app.otherElements["GuestView"]
         XCTAssertTrue(guestView.waitForExistence(timeout: 5), "Guest view should be visible")
         
+        // Verify guest mode elements
+        let backButton = app.buttons["BackButton"]
+        XCTAssertTrue(backButton.exists, "Back button should be visible")
+        
+        let limitedModeTitle = app.staticTexts["Sınırlı Kullanım Modu"]
+        XCTAssertTrue(limitedModeTitle.exists, "Limited mode title should be visible")
+        
+        let loginButton = app.buttons["Giriş Yap"]
+        XCTAssertTrue(loginButton.exists, "Login button should be visible")
+        
         // Test adding a task
         let addButton = app.buttons["Add New Task"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
@@ -345,6 +392,14 @@ final class SwiftTaskUITests: XCTestCase {
         // Verify task was added
         let taskTitle = app.staticTexts["Test Task"]
         XCTAssertTrue(taskTitle.waitForExistence(timeout: 5))
+        
+        // Test navigation back to intro
+        backButton.tap()
+        sleep(1)
+        
+        // Verify we're back at intro view
+        let introView = app.otherElements["StartScreenView"]
+        XCTAssertTrue(introView.waitForExistence(timeout: 5), "Should return to intro view")
     }
     
     func testAccessibility() throws {
