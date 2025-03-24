@@ -1,176 +1,37 @@
-
 import SwiftUI
 
 struct CreateAccountView: View {
     @ObservedObject var loginviewModel: LoginViewModel
     @StateObject private var viewModel = CreateAccountViewModel()
     @Binding var showRegisterScreen: Bool
-    @Binding var showLoginScreen: Bool // Yeni eklenen binding
+    @Binding var showLoginScreen: Bool
     @FocusState private var isKeyboardActive: Bool
     
-    let globalGradient = LinearGradient(
-        gradient: Gradient(colors: [Color(red: 1.00, green: 0.44, blue: 0.14), Color(red: 0.29, green: 0.29, blue: 0.51)]),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 0.07, green: 0.07, blue: 0.07)
+                Color.customBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        
                         Text("Create Account")
                             .foregroundColor(.white)
                             .font(.system(size: 28, weight: .bold))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.bottom, 10)
                         
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Username")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white)
-                            TextField("Enter your Username", text: $viewModel.username)
-                                .padding()
-                                .autocapitalization(.none)
-                                .foregroundStyle(.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray, lineWidth: 2)
-                                )
-                                .focused($isKeyboardActive)
-                            
-                            Text("Email")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white)
-                            TextField("Enter your Email", text: $viewModel.email)
-                                .padding()
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .foregroundStyle(.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray, lineWidth: 2)
-                                )
-                                .focused($isKeyboardActive)
-                            
-                            PasswordFieldWithInfo(
-                                text: $viewModel.password,
-                                title: "Password",
-                                placeholder: "Enter your Password",
-                                infoText: "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character."
-                            )
-                            
-                            PasswordFieldWithInfo(
-                                text: $viewModel.confirmPassword,
-                                title: "Confirm Password",
-                                placeholder: "Confirm your Password",
-                                infoText: "Please enter your password again to confirm it matches."
-                            )
-                            
-                            if let errorMessage = viewModel.errorMessage {
-                                Text(errorMessage)
-                                    .foregroundColor(.red)
-                                    .font(.system(size: 14))
-                                    .padding(.top, 5)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                        }
+                        // Form Fields Section
+                        formFieldsSection
                         
-                        VStack(spacing: 20) {
-                            Button(action: {
-                                guard viewModel.isPrivacyAccepted && viewModel.isConditionsAccepted else {
-                                    viewModel.errorMessage = "Please accept Privacy Policy and Terms & Conditions"
-                                    return
-                                }
-                                
-                                if viewModel.username.isEmpty || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.confirmPassword.isEmpty {
-                                    viewModel.errorMessage = "All fields are required."
-                                    return
-                                }
-                                
-                                if viewModel.password != viewModel.confirmPassword {
-                                    viewModel.errorMessage = "Passwords do not match."
-                                    return
-                                }
-                                
-                                viewModel.isLoading = true
-                                viewModel.createAccount { success in
-                                    DispatchQueue.main.async {
-                                        viewModel.isLoading = false
-                                        
-                                        if success {
-                                            showRegisterScreen = false
-                                            showLoginScreen = true
-                                        }
-                                    }
-                                }
-                            }) {
-                                ZStack{
-                                    if viewModel.isLoading {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle())
-                                            .foregroundStyle(.white)
-                                            .padding(.horizontal)
-                                        
-                                    } else {
-                                        Text("Register")
-                                            .font(.headline)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .background(globalGradient)
-                                            .cornerRadius(10)
-                                    }
-                                }
-                            }
-                            .disabled(viewModel.isLoading)
-                        }
-                        .padding(.top, 20)
+                        // Action Buttons Section
+                        actionButtonsSection
                         
-                        VStack(spacing: 10) {
-                            Toggle(isOn: $viewModel.isConditionsAccepted) {
-                                HStack {
-                                    Text("I agree to the")
-                                        .foregroundColor(.white)
-                                    Button(action: {}) {
-                                        Text("Terms and Conditions")
-                                            .foregroundColor(.blue)
-                                            .underline()
-                                    }
-                                }
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: .orange))
-                            
-                            Toggle(isOn: $viewModel.isPrivacyAccepted) {
-                                HStack {
-                                    Text("I agree to the")
-                                        .foregroundColor(.white)
-                                    Button(action: {}) {
-                                        Text("Privacy Policy")
-                                            .foregroundColor(.blue)
-                                            .underline()
-                                    }
-                                }
-                            }
-                            .toggleStyle(SwitchToggleStyle(tint: .orange))
-                        }
+                        // Terms Section
+                        termsSection
                         
-                        // Yeni düzenlenmiş buton
-                        Button(action: {
-                            showLoginScreen = true    // LoginView'ı aç
-                        }) {
-                            Text("Already have an account? Log in")
-                                .foregroundColor(.blue)
-                                .underline()
-                        }
-                        .navigationDestination(isPresented: $showLoginScreen){
-                            LoginView(showLoginScreen: $showLoginScreen)
-                        }
-                        .padding(.top, 10)
+                        // Login Link Section
+                        loginLinkSection
                     }
                     .padding(.horizontal, 20)
                 }
@@ -183,61 +44,231 @@ struct CreateAccountView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        showRegisterScreen = false
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                    }
+                    backButton
+                }
+            }
+        }
+    }
+    
+    // MARK: - View Components
+    private var formFieldsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            CustomTextField(
+                text: $viewModel.username,
+                title: "Username",
+                placeholder: "Enter your Username",
+                icon: "person.fill"
+            )
+            
+            CustomTextField(
+                text: $viewModel.email,
+                title: "Email",
+                placeholder: "Enter your Email",
+                icon: "envelope.fill",
+                keyboardType: .emailAddress
+            )
+            
+            CustomSecureField(
+                text: $viewModel.password,
+                title: "Password",
+                placeholder: "Enter your Password",
+                icon: "lock.fill",
+                infoText: "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character."
+            )
+            
+            CustomSecureField(
+                text: $viewModel.confirmPassword,
+                title: "Confirm Password",
+                placeholder: "Confirm your Password",
+                icon: "lock.shield.fill",
+                infoText: "Please enter your password again to confirm it matches."
+            )
+            
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .font(.system(size: 14))
+                    .padding(.top, 5)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+        }
+    }
+    
+    private var actionButtonsSection: some View {
+        Button(action: {
+            handleRegistration()
+        }) {
+            ZStack {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .foregroundStyle(.white)
+                } else {
+                    Text("Register")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .foregroundStyle(.white)
+                        .background(Color.customGradient)
+                        .cornerRadius(15)
+                }
+            }
+        }
+        .disabled(viewModel.isLoading)
+        .padding(.top, 20)
+    }
+    
+    private var termsSection: some View {
+        VStack(spacing: 10) {
+            CustomToggle(
+                isOn: $viewModel.isConditionsAccepted,
+                text: "I agree to the Terms and Conditions"
+            )
+            
+            CustomToggle(
+                isOn: $viewModel.isPrivacyAccepted,
+                text: "I agree to the Privacy Policy"
+            )
+        }
+    }
+    
+    private var loginLinkSection: some View {
+        Button(action: {
+            showLoginScreen = true
+        }) {
+            Text("Already have an account? Log in")
+                .foregroundColor(.customAccent)
+                .underline()
+        }
+        .navigationDestination(isPresented: $showLoginScreen) {
+            LoginView(showLoginScreen: $showLoginScreen)
+        }
+        .padding(.top, 10)
+    }
+    
+    private var backButton: some View {
+        Button(action: {
+            showRegisterScreen = false
+        }) {
+            Image(systemName: "chevron.left")
+                .font(.title2)
+                .foregroundColor(.white)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    private func handleRegistration() {
+        guard viewModel.isPrivacyAccepted && viewModel.isConditionsAccepted else {
+            viewModel.errorMessage = "Please accept Privacy Policy and Terms & Conditions"
+            return
+        }
+        
+        guard !viewModel.username.isEmpty && !viewModel.email.isEmpty &&
+              !viewModel.password.isEmpty && !viewModel.confirmPassword.isEmpty else {
+            viewModel.errorMessage = "All fields are required."
+            return
+        }
+        
+        guard viewModel.password == viewModel.confirmPassword else {
+            viewModel.errorMessage = "Passwords do not match."
+            return
+        }
+        
+        viewModel.isLoading = true
+        viewModel.createAccount { success in
+            DispatchQueue.main.async {
+                viewModel.isLoading = false
+                if success {
+                    showRegisterScreen = false
+                    showLoginScreen = true
                 }
             }
         }
     }
 }
 
-// PasswordFieldWithInfo ve hideKeyboard extension değişmeden kalacak.
-struct PasswordFieldWithInfo: View {
+// MARK: - Custom Components
+struct CustomTextField: View {
     @Binding var text: String
     let title: String
     let placeholder: String
-    let infoText: String
-    @State private var showInfo: Bool = false
+    let icon: String
+    var keyboardType: UIKeyboardType = .default
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 16))
                 .foregroundColor(.white)
             
-            ZStack(alignment: .trailing) {
-                SecureField(placeholder, text: $text)
-                    .padding()
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.gray)
+                TextField(placeholder, text: $text)
+                    .keyboardType(keyboardType)
+                    .autocapitalization(.none)
                     .foregroundStyle(.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.gray, lineWidth: 2)
-                    )
+            }
+            .padding()
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.gray, lineWidth: 2)
+            )
+        }
+    }
+}
+
+struct CustomSecureField: View {
+    @Binding var text: String
+    let title: String
+    let placeholder: String
+    let icon: String
+    let infoText: String
+    @State private var showInfo: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+            
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.gray)
+                SecureField(placeholder, text: $text)
+                    .foregroundStyle(.white)
                 
-                Button {
-                    showInfo.toggle()
-                } label: {
+                Button(action: { showInfo.toggle() }) {
                     Image(systemName: "info.circle")
                         .foregroundColor(.gray)
-                        .frame(width: 44, height: 44)
                 }
-                .padding(.trailing, 8)
             }
+            .padding()
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.gray, lineWidth: 2)
+            )
             
             if showInfo {
                 Text(infoText)
                     .font(.system(size: 14))
                     .foregroundColor(.gray)
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .cornerRadius(8)
             }
         }
+    }
+}
+
+struct CustomToggle: View {
+    @Binding var isOn: Bool
+    let text: String
+    
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            Text(text)
+                .foregroundColor(.white)
+        }
+        .toggleStyle(SwitchToggleStyle(tint: .customAccent))
     }
 }
 

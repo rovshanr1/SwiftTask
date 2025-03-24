@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseAuth
 import PhotosUI
 
+@MainActor
 class ProfileViewModel: ObservableObject {
     @Published var user: ProfileModel?
     @Published var profileImageData: Data? = nil
@@ -25,48 +26,156 @@ class ProfileViewModel: ObservableObject {
     @Published var deleteAccountError: String?
    
     private let context = PersistenceController.shared.viewContext
+    private let offlineSyncManager = OfflineSyncManager.shared
     
-    init() {
-        fetchUserData()
-        fetchProfileImage()
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(updateTaskCounts(_:)), name: .tasksUpdated, object: nil)
+    // TaskCounts'u public yapalım ve ayrı bir dosyaya taşıyalım ya da aynı dosyada public olarak tanımlayalım
+    struct TaskCounts {
+        let done: Int
+        let left: Int
     }
     
-    @objc private func updateTaskCounts(_ notification: Notification) {
-           if let taskDone = notification.userInfo?["taskDone"] as? Int,
-              let taskLeft = notification.userInfo?["taskLeft"] as? Int {
-               DispatchQueue.main.async {
-                   self.user?.taskDone = taskDone
-                   self.user?.taskLeft = taskLeft
-               }
-           }
-       }
+    // Public computed properties ekleyelim
+    @Published private(set) var taskCounts = TaskCounts(done: 0, left: 0)
     
-    func fetchUserData() {
-        isLoading = true
+    // Public access için computed properties
+    var completedTasks: Int {
+        taskCounts.done
+    }
+    
+    var remainingTasks: Int {
+        taskCounts.left
+    }
+    
+    init() {
+        loadLocalData()
+        syncWithFirebase()
+        
+        // Notification observer'ı ekleyelim
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleTaskCountsUpdate),
+            name: .tasksUpdated,
+            object: nil
+        )
+    }
+    
+    private func loadLocalData() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
- 
+        
+        // Load profile from CoreData
         if let cachedProfile = CoreDataManager.shared.fetchUserProfile(userId: userID) {
-            DispatchQueue.main.async {
-                self.user = cachedProfile
-            }
+            self.user = cachedProfile
         }
         
-       
-        UserService.shared.fetchUserProfile(userID: userID) { profile in
-            DispatchQueue.main.async {
-                if let profile = profile {
-                    self.user = profile
-                    CoreDataManager.shared.saveUserProfile(userId: userID, profile: profile)
-                }
-                self.isLoading = false
+        // Load profile image from CoreData
+        let imageData = CoreDataManager.shared.fetchProfileImage(userId: userID)
+        self.profileImageData = imageData
+    }
+    
+    private func syncWithFirebase() {
+        guard offlineSyncManager.isOnline else { return }
+        
+        Task { @MainActor in
+            await fetchUserData()
+        }
+    }
+    
+    // Task counts güncellemesi için yeni metod
+    @objc private func handleTaskCountsUpdate(_ notification: Notification) {
+        Task { @MainActor in
+            if let taskDone = notification.userInfo?["taskDone"] as? Int,
+               let taskLeft = notification.userInfo?["taskLeft"] as? Int {
+                await updateTaskCounts(done: taskDone, left: taskLeft)
             }
+        }
+    }
+    
+    private func updateTaskCounts(done: Int, left: Int) async {
+        await MainActor.run {
+            taskCounts = TaskCounts(done: done, left: left)
+            
+            if var updatedUser = user {
+                updatedUser.taskDone = done
+                updatedUser.taskLeft = left
+                user = updatedUser
+            }
+        }
+    }
+    
+    // Profile güncelleme işlemi için güvenli metod
+    func updateProfile(with profile: ProfileModel) {
+        Task { @MainActor in
+            self.user = profile
+            self.taskCounts = TaskCounts(done: profile.taskDone, left: profile.taskLeft)
+        }
+    }
+    
+    // Profil resmi güncelleme için güvenli metod
+    func updateProfileImage(_ image: UIImage) {
+        Task { @MainActor in
+            guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+            CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: imageData)
+            self.profileImageData = imageData
+            NotificationCenter.default.post(name: .profileUpdated, object: nil)
+        }
+    }
+    
+    // Image loading için güvenli metod
+    private func loadImage(from item: PhotosPickerItem) {
+        Task { @MainActor in
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self),
+                      let uiImage = UIImage(data: data) else { return }
+                
+                let maxDimension: CGFloat = 1024.0
+                let targetSize = CGSize(width: maxDimension, height: maxDimension)
+                
+                guard let resizedImage = resizeImage(uiImage, to: targetSize),
+                      let imageData = resizedImage.jpegData(compressionQuality: 0.8) else { return }
+                
+                let userId = Auth.auth().currentUser?.uid ?? ""
+                CoreDataManager.shared.saveProfileImage(userId: userId, imageData: imageData)
+                self.profileImageData = imageData
+                NotificationCenter.default.post(name: .profileUpdated, object: nil)
+            } catch {
+                print("Error loading image: \(error)")
+            }
+        }
+    }
+    
+    private func fetchUserData() async {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        let userService = UserService.shared
+        
+        do {
+            let profile = try await withCheckedThrowingContinuation { continuation in
+                userService.fetchUserProfile(userID: userID) { profile in
+                    if let profile = profile {
+                        continuation.resume(returning: profile)
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "", code: -1))
+                    }
+                }
+            }
+            
+            // Profile'ı güvenli bir şekilde güncelle
+            await MainActor.run {
+                self.user = profile
+                self.taskCounts = TaskCounts(done: profile.taskDone, left: profile.taskLeft)
+            }
+            
+            // CoreData'ya kaydet
+            CoreDataManager.shared.saveUserProfile(userId: userID, profile: profile)
+            
+        } catch {
+            print("Error fetching user data: \(error)")
         }
     }
     
     func saveUserProfile(name: String) {
         guard let userID = Auth.auth().currentUser?.uid else { return }
+        
         let updatedProfile = ProfileModel(
             userName: name,
             taskLeft: user?.taskLeft ?? 0,
@@ -76,16 +185,22 @@ class ProfileViewModel: ObservableObject {
         )
         
         CoreDataManager.shared.saveUserProfile(userId: userID, profile: updatedProfile)
+        self.user = updatedProfile
         
-        UserService.shared.saveUserProfile(userID: userID, profile: updatedProfile) { error in
-            if let error = error {
-                print("Firebase update error: \(error.localizedDescription)")
-                OfflineSyncManager.shared.addToQueue(data: [
-                    "name": name
-                ])
-            } else {
-                print("Profile updated in Firestore")
+        if offlineSyncManager.isOnline {
+            Task { @MainActor in
+                await withCheckedContinuation { continuation in
+                    UserService.shared.saveUserProfile(userID: userID, profile: updatedProfile) { [weak self] error in
+                        if let error = error {
+                            print("Firebase güncelleme hatası: \(error.localizedDescription)")
+                            self?.offlineSyncManager.addToQueue(data: ["name": name])
+                        }
+                        continuation.resume()
+                    }
+                }
             }
+        } else {
+            offlineSyncManager.addToQueue(data: ["name": name])
         }
     }
     
@@ -101,48 +216,18 @@ class ProfileViewModel: ObservableObject {
         }
     }
     
-    func loadImage(from item: PhotosPickerItem) {
-        isLoading = true
-        ImageService.shared.loadImage(from: item) { data in
-            DispatchQueue.main.async {
-                if let data = data, let uiImage = UIImage(data: data) {
-                    let maxDimension: CGFloat = 1024.0
-                    let targetSize = CGSize(width: maxDimension, height: maxDimension)
-                    if let resizedImage = self.resizeImage(uiImage, to: targetSize) {
-                        self.profileImageData = resizedImage.jpegData(compressionQuality: 0.8)
-                        if let imageData = self.profileImageData {
-                            CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: imageData)
-                            NotificationCenter.default.post(name: .profileUpdated, object: nil)
-                        }
-                    }
-                }
-                self.isLoading = false
-            }
-        }
-    }
-
-    
-    func fetchProfileImage() {
+    func removeProfileImage() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
-        
-        let imageData = CoreDataManager.shared.fetchProfileImage(userId: userID)
-        
-        DispatchQueue.main.async {
-            self.profileImageData = imageData
-        }
+        CoreDataManager.shared.deleteProfileImage(userId: userID)
+        self.profileImageData = nil
+        NotificationCenter.default.post(name: .profileUpdated, object: nil)
     }
     
-    func updateProfileImage(_ image: UIImage) {
-        DispatchQueue.global(qos: .background).async {
-            if let imageData = image.jpegData(compressionQuality: 0.5) {
-                CoreDataManager.shared.saveProfileImage(userId: Auth.auth().currentUser?.uid ?? "", imageData: imageData)
-
-                DispatchQueue.main.async {
-                    self.profileImageData = imageData
-                    NotificationCenter.default.post(name: .profileUpdated, object: nil)
-                }
-            }
-        }
+    func logout() {
+        try? Auth.auth().signOut()
+        self.user = nil
+        UserDefaults.standard.set(false, forKey: "isLoggedIn")
+        CoreDataManager.shared.clearUserData()
     }
     
     func changePassword(currentPassword: String, newPassword: String, completion: @escaping (Bool, String?) -> Void) {
@@ -152,43 +237,26 @@ class ProfileViewModel: ObservableObject {
         }
 
         let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        
+        Task { @MainActor in
+            await withCheckedContinuation { continuation in
+                user.reauthenticate(with: credential) { _, error in
+                    if error != nil {
+                        completion(false, "Current password is incorrect.")
+                        continuation.resume()
+                        return
+                    }
 
-        //Authenticate the user again
-        user.reauthenticate(with: credential) { _, error in
-            if error != nil {
-                completion(false, "Current password is incorrect.")
-                return
-            }
-
-            //Update new password
-            user.updatePassword(to: newPassword) { error in
-                if let error = error {
-                    completion(false, error.localizedDescription)
-                } else {
-                    completion(true, nil)
+                    user.updatePassword(to: newPassword) { error in
+                        if let error = error {
+                            completion(false, error.localizedDescription)
+                        } else {
+                            completion(true, nil)
+                        }
+                        continuation.resume()
+                    }
                 }
             }
-        }
-    }
-    
-    // Deleting Profile Image
-    func removeProfileImage() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-       
-        DispatchQueue.main.async {
-            self.profileImageData = nil
-            CoreDataManager.shared.deleteProfileImage(userId: userID)
-            NotificationCenter.default.post(name: .profileUpdated, object: nil)
-        }
-    }
-
-    
-    func logout() {
-        try? Auth.auth().signOut()
-        DispatchQueue.main.async {
-            self.user = nil
-            UserDefaults.standard.set(false, forKey: "isLoggedIn")
-            CoreDataManager.shared.clearUserData()
         }
     }
     
@@ -198,36 +266,51 @@ class ProfileViewModel: ObservableObject {
             return
         }
         
-        // Re-authenticate user before deletion
         let credential = EmailAuthProvider.credential(withEmail: email, password: password)
-        user.reauthenticate(with: credential) { [weak self] _, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                completion(false, "Authentication failed: \(error.localizedDescription)")
-                return
-            }
-            
-            // Delete user data from Firestore
-            let userId = user.uid // uid is already non-optional
-            UserService.shared.deleteUserProfile(userID: userId) { error in
-                if let error = error {
-                    print("Error deleting Firestore data: \(error.localizedDescription)")
+        
+        Task { @MainActor in
+            await withCheckedContinuation { continuation in
+                user.reauthenticate(with: credential) { [weak self] _, error in
+                    guard let self = self else {
+                        continuation.resume()
+                        return
+                    }
+                    
+                    if let error = error {
+                        completion(false, "Authentication failed: \(error.localizedDescription)")
+                        continuation.resume()
+                        return
+                    }
+                    
+                    let userId = user.uid
+                    UserService.shared.deleteUserProfile(userID: userId) { error in
+                        if let error = error {
+                            print("Error deleting Firestore data: \(error.localizedDescription)")
+                        }
+                    }
+                    
+                    CoreDataManager.shared.clearUserData()
+                    
+                    user.delete { error in
+                        if let error = error {
+                            completion(false, "Failed to delete account: \(error.localizedDescription)")
+                        } else {
+                            completion(true, nil)
+                            self.logout()
+                        }
+                        continuation.resume()
+                    }
                 }
             }
-            
-            // Delete local data
-            CoreDataManager.shared.clearUserData()
-            
-            // Delete Firebase Auth account
-            user.delete { error in
-                if let error = error {
-                    completion(false, "Failed to delete account: \(error.localizedDescription)")
-                } else {
-                    completion(true, nil)
-                    self.logout()
-                }
-            }
+        }
+    }
+}
+
+// MARK: - Task Count Updates
+extension ProfileViewModel {
+    func updateTaskStatistics(completed: Int, remaining: Int) {
+        Task { @MainActor in
+            await updateTaskCounts(done: completed, left: remaining)
         }
     }
 }

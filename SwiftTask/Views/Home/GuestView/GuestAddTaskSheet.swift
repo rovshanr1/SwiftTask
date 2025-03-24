@@ -7,65 +7,104 @@ struct GuestAddTaskSheet: View {
     var onSave: () -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Quick Task")
-                .font(.title2)
-                .bold()
-                .foregroundStyle(.white)
-            
-            Divider().background(Color.gray)
-                .padding(8)
-            
-            TextField("Task title", text: $title, prompt: Text("Enter task title").foregroundStyle(.gray))
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .frame(height: 58)
-                .background(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.gray, lineWidth: 2)
-                )
-                .padding(.horizontal)
-            
-            TextField("Description (optional)", text: $description, prompt: Text("Add a short description").foregroundStyle(.gray))
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .frame(height: 58)
-                .background(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.gray, lineWidth: 2)
-                )
-                .padding(.horizontal)
-            
-            HStack(spacing: 20) {
-                Button(action: {
-                    isPresented = false
-                }) {
-                    Text("Cancel")
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                }
+        NavigationView {
+            ZStack {
+                Color.customBackground
+                    .ignoresSafeArea()
                 
-                Button(action: {
-                    onSave()
-                    isPresented = false
-                }) {
-                    Text("Add Task")
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .cornerRadius(5)
+                VStack(spacing: 24) {
+                    // Form Fields
+                    VStack(spacing: 20) {
+                        // Title Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Task Title")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            TextField("", text: $title)
+                                .placeholder(when: title.isEmpty) {
+                                    Text("Enter task title")
+                                        .foregroundColor(.gray)
+                                }
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(15)
+                        }
+                        
+                        // Description Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Description")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            TextField("", text: $description)
+                                .placeholder(when: description.isEmpty) {
+                                    Text("Add task description (optional)")
+                                        .foregroundColor(.gray)
+                                }
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(15)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Action Buttons
+                    VStack(spacing: 16) {
+                        Button(action: {
+                            onSave()
+                            isPresented = false
+                        }) {
+                            Text("Add Task")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .foregroundStyle(.white)
+                                .background(Color.customGradient)
+                                .cornerRadius(15)
+                        }
+                        
+                        Button(action: {
+                            isPresented = false
+                        }) {
+                            Text("Cancel")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .foregroundColor(.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .stroke(Color.customAccent, lineWidth: 2)
+                                )
+                        }
+                    }
+                    .padding(.horizontal, 20)
                 }
             }
-            .padding(.horizontal)
-            
-            Spacer()
+            .navigationTitle("Add New Task")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Add New Task")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
         }
-        .padding(.top, 20)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
-        .presentationDetents([.height(300)])
     }
-} 
+}
+
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+        
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
+        }
+    }
+}

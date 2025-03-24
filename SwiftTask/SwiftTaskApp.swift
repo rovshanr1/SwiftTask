@@ -12,6 +12,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
+        
+        // Auth durumunu uygulama başlarken kontrol et
+        AuthService.shared.checkAndResetAuthState()
         return true
     }
 }
@@ -27,18 +30,25 @@ struct SwiftTaskApp: App {
     @AppStorage("isLaunchViewCompleted") private var isLaunchViewCompleted: Bool = false
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     
+    // App state
+    @StateObject private var appState = AppState.shared
+    
     var body: some Scene {
         WindowGroup {
             Group {
-                if isLoggedIn {
+                if isLoggedIn && !appState.forceLogout {
                     HomeView(context: persistenceController.viewContext)
                         .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                        .onChange(of: appState.forceLogout) { _, newValue in
+                            if newValue {
+                                isLoggedIn = false
+                            }
+                        }
                 } else {
                     if !isLaunchViewCompleted {
                         LaunchView()
                             .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                    }
-                     else {
+                    } else {
                         IntroView()
                             .environment(\.managedObjectContext, persistenceController.container.viewContext)
                     }
@@ -46,6 +56,7 @@ struct SwiftTaskApp: App {
             }
             .animation(.easeInOut, value: isLaunchViewCompleted)
             .animation(.easeInOut, value: isLoggedIn)
+            .animation(.easeInOut, value: appState.forceLogout)
         }
     }
 }

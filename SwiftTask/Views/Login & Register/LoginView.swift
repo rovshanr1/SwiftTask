@@ -145,9 +145,3 @@ struct LoginView: View {
         }
     }
 }
-
-
-
-#Preview {
-    LoginView(showLoginScreen: .constant(true))
-}

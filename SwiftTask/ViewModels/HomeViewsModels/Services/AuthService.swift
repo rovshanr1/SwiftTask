@@ -99,4 +99,22 @@ class AuthService: AuthServiceProtocol {
             }
         }
     }
+    
+    func checkAndResetAuthState() {
+        if let user = Auth.auth().currentUser {
+            // Kullanıcı mevcutsa, kimliğini doğrula
+            user.reload { error in
+                if let error = error {
+                    print("Kullanıcı oturumu sıfırlanıyor: \(error.localizedDescription)")
+                    // Kullanıcı Firebase'de silinmiş, oturumu kapat
+                    try? Auth.auth().signOut()
+                    UserDefaults.standard.set(false, forKey: "isLoggedIn")
+                    CoreDataManager.shared.clearUserData()
+                    
+                    // Bildirim gönder
+                    NotificationCenter.default.post(name: .userSignedOut, object: nil)
+                }
+            }
+        }
+    }
 }

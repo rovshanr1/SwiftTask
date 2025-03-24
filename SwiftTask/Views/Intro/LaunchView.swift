@@ -30,8 +30,7 @@ struct LaunchView: View {
     
     var body: some View {
         ZStack {
-            // Background color
-            Color(red: 0.07, green: 0.07, blue: 0.07)
+            Color.black
                 .ignoresSafeArea()
             
             // Logo content
@@ -46,6 +45,7 @@ struct LaunchView: View {
         .accessibilityIdentifier("LaunchView")
         .onAppear {
             print("DEBUG: LaunchView appeared")
+            AuthService.shared.checkAndResetAuthState()
             startLaunchSequence()
         }
     }
@@ -72,7 +72,10 @@ struct LaunchView: View {
             }
         }
     }
+    
 }
+    
+ 
 
 //#Preview {
 //    LaunchView()

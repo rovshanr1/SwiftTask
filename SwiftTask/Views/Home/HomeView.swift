@@ -30,15 +30,25 @@ struct HomeView: View {
                 
                 VStack(spacing: 0) {
                     if navigateToHome {
-                        ScrollView {
-                            VStack(spacing: 16) {
-                                headerView
+                        VStack{
+                            headerView
+                        }
+                        .padding(.bottom)
+                                  
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 24) {
+                                taskSummaryView
                                 searchBar
                                 taskListView()
                             }
                             .padding(.bottom, 90)
                         }
                         .scrollDismissesKeyboard(.immediately)
+                        .overlay {
+                            if viewModel.isLoading {
+                                LoadingView()
+                            }
+                        }
                     } else if navigateToFocus {
                         FocusView()
                             .padding(.bottom, 90)
@@ -59,40 +69,23 @@ struct HomeView: View {
             }
             .navigationBarBackButtonHidden(true)
             .onAppear { viewModel.fetchItems() }
-            .onTapGesture {
-                hideKeyboard()
+            .onTapGesture { hideKeyboard() }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK", role: .cancel) { viewModel.clearError() }
+            } message: {
+                Text(viewModel.errorMessage ?? "An unknown error occurred")
             }
             .sheet(isPresented: $showingSheet) {
-                ZStack{
-                    Color(red: 0.07, green: 0.07, blue: 0.07)
-                        .ignoresSafeArea()
-                    
-                    AddTaskSheet(
-                        isPresented: $showingSheet,
-                        title: $newTaskTitle,
-                        description: $newTaskDescription,
-                        selectedCategory: $viewModel.selectedCategory,
-                        selectedPriority: $viewModel.selectedPriority,
-                        onSave: {
-                            if !newTaskTitle.isEmpty {
-                                viewModel.addTask(
-                                    title: newTaskTitle,
-                                    description: newTaskDescription,
-                                    date: newDate,
-                                    category: viewModel.selectedCategory,
-                                    priority: viewModel.selectedPriority
-                                )
-                                newTaskTitle = ""
-                                newTaskDescription = ""
-                                newDate = Date()
-                                viewModel.selectedCategory = nil
-                                viewModel.selectedPriority = nil
-                            }
-                        }
-                    )
-                }
+                AddTaskSheetContainer(
+                    isPresented: $showingSheet,
+                    title: $newTaskTitle,
+                    description: $newTaskDescription,
+                    selectedCategory: $viewModel.selectedCategory,
+                    selectedPriority: $viewModel.selectedPriority,
+                    onSave: saveNewTask
+                )
             }
-            .alert("Are you sure?", isPresented: $showingDeleteAlert) {
+            .alert("Are you sure you want to delete this task?", isPresented: $showingDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
                     if let item = itemToDelete {
@@ -100,13 +93,11 @@ struct HomeView: View {
                         itemToDelete = nil
                     }
                 }
-            } message: {
-                Text("This task will be permanently deleted.")
             }
             .navigationDestination(isPresented: $navigateToProfile) {
                 ProfileView(homeViewModel: viewModel)
             }
-            .navigationDestination(isPresented: $navigateToCalendar){
+            .navigationDestination(isPresented: $navigateToCalendar) {
                 CalendarView(context: PersistenceController.shared.viewContext)
             }
             .navigationDestination(isPresented: $navigateToFocus) {
@@ -123,28 +114,36 @@ struct HomeView: View {
                     .foregroundColor(.gray)
                 Text(viewModel.userName)
                     .font(.title)
+                    .fontWeight(.bold)
                     .foregroundColor(.white)
             }
             Spacer()
             
             NavigationLink(destination: ProfileView(homeViewModel: viewModel)) {
-                if let imageData = viewModel.profileImageData, let uiImage = UIImage(data: imageData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 42, height: 42)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
-                } else {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .frame(width: 42, height: 42)
-                        .foregroundColor(.gray)
-                }
+                ProfileImageView(imageData: viewModel.profileImageData)
             }
         }
         .padding(.horizontal)
         .padding(.top, 16)
+    }
+
+    private var taskSummaryView: some View {
+        HStack(spacing: 16) {
+            TaskSummaryCard(
+                title: "Completed",
+                count: viewModel.taskDoneCount,
+                icon: "checkmark.circle.fill",
+                color: .green
+            )
+            
+            TaskSummaryCard(
+                title: "Remaining",
+                count: viewModel.taskLeftCount,
+                icon: "clock.fill",
+                color: .orange
+            )
+        }
+        .padding(.horizontal)
     }
 
     private var searchBar: some View {
@@ -152,16 +151,14 @@ struct HomeView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-                TextField("Search for your tasks...", text: $viewModel.searchText)
+                TextField("Search your tasks...", text: $viewModel.searchText)
                     .foregroundColor(.white)
                     .accentColor(.white)
                     .onChange(of: viewModel.searchText) { oldValue, newValue in
                         viewModel.isSearching = !viewModel.searchText.isEmpty
                     }
                     .submitLabel(.search)
-                    .onSubmit {
-                        hideKeyboard()
-                    }
+                    .onSubmit { hideKeyboard() }
                 
                 if !viewModel.searchText.isEmpty {
                     Button(action: {
@@ -176,89 +173,160 @@ struct HomeView: View {
             }
             .padding(12)
             .background(Color(red: 0.21, green: 0.21, blue: 0.21))
-            .cornerRadius(4)
+            .cornerRadius(12)
         }
         .padding(.horizontal)
-        .padding(.top, 8)
     }
 
     private func taskListView() -> some View {
         VStack(alignment: .leading, spacing: 20) {
             if viewModel.filteredNewItems.isEmpty && viewModel.filteredCompletedTasks.isEmpty {
                 if viewModel.isSearching {
-                    VStack(spacing: 16) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray)
-                        Text("No matching tasks found")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 100)
+                    EmptySearchView()
                 } else {
                     EmptyTaskView()
                 }
             } else {
                 if !viewModel.filteredNewItems.isEmpty {
-                    taskSection(
-                        title: "New Task",
+                    TaskSectionView(
+                        title: "New Tasks",
                         isExpanded: $viewModel.isTodayExpanded,
-                        items: viewModel.filteredNewItems
+                        items: viewModel.filteredNewItems,
+                        onDelete: showDeleteAlert,
+                        onEdit: viewModel.editTask,
+                        onComplete: viewModel.toggleTaskCompletion
                     )
                 }
 
                 if !viewModel.filteredCompletedTasks.isEmpty {
-                    taskSection(
+                    TaskSectionView(
                         title: "Completed",
                         isExpanded: $viewModel.isCompletedExpanded,
-                        items: viewModel.filteredCompletedTasks
+                        items: viewModel.filteredCompletedTasks,
+                        onDelete: showDeleteAlert,
+                        onEdit: viewModel.editTask,
+                        onComplete: viewModel.toggleTaskCompletion
                     )
                 }
             }
         }
-        .frame(maxWidth: .infinity)
         .padding(.vertical)
     }
 
-    private func taskSection(title: String, isExpanded: Binding<Bool>, items: [Item]) -> some View {
-        Section(header: TaskHeaderView(title: title, isExpanded: isExpanded)) {
-            if isExpanded.wrappedValue {
-                VStack(spacing: 10) {
+    private func saveNewTask() {
+        if !newTaskTitle.isEmpty {
+            viewModel.addTask(
+                title: newTaskTitle,
+                description: newTaskDescription,
+                date: newDate,
+                category: viewModel.selectedCategory,
+                priority: viewModel.selectedPriority
+            )
+            newTaskTitle = ""
+            newTaskDescription = ""
+            newDate = Date()
+            viewModel.selectedCategory = nil
+            viewModel.selectedPriority = nil
+        }
+    }
+
+    private func showDeleteAlert(for item: Item) {
+        itemToDelete = item
+        showingDeleteAlert = true
+    }
+}
+
+
+
+
+struct LoadingView: View {
+    var body: some View {
+        ProgressView()
+            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            .scaleEffect(1.5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black.opacity(0.3))
+    }
+}
+
+struct EmptySearchView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundColor(.gray)
+            Text("No matching tasks found")
+                .font(.headline)
+                .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 100)
+    }
+}
+
+struct TaskSectionView: View {
+    let title: String
+    @Binding var isExpanded: Bool
+    let items: [Item]
+    let onDelete: (Item) -> Void
+    let onEdit: (Item, String, String, TaskCategory?, TaskPriority?) -> Void
+    let onComplete: (Item) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button(action: {
+                withAnimation { isExpanded.toggle() }
+            }) {
+                HStack {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal)
+            }
+            
+            if isExpanded {
+                LazyVStack(spacing: 12) {
                     ForEach(items) { item in
                         TaskRow(
                             item: item,
-                            onDelete: { showDeleteAlert(for: item) },
-                            onEdit: { editedItem, newTitle, newDescription, category, priority in
-                                viewModel.editTask(item: editedItem, newTitle: newTitle, newDescription: newDescription)
-                            },
-                            onComplete: { item in
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    viewModel.toggleTaskCompletion(item)
-                                }
-                            }
+                            onDelete: { onDelete(item) },
+                            onEdit: onEdit,
+                            onComplete: onComplete
                         )
                         .transition(.opacity)
                     }
                 }
-                .padding(.top, 10)
             }
         }
     }
+}
 
-    private func saveTask() {
-        if !newTaskTitle.isEmpty {
-            print("Saving task: \(newTaskTitle)")
-            viewModel.addTask(title: newTaskTitle, description: newTaskDescription, date: newDate)
-            newTaskTitle = ""
-            newTaskDescription = ""
-            newDate = Date()
-        }
-    }
+struct AddTaskSheetContainer: View {
+    @Binding var isPresented: Bool
+    @Binding var title: String
+    @Binding var description: String
+    @Binding var selectedCategory: TaskCategory?
+    @Binding var selectedPriority: TaskPriority?
+    let onSave: () -> Void
     
-    private func showDeleteAlert(for item: Item) {
-        itemToDelete = item
-        showingDeleteAlert = true
+    var body: some View {
+        ZStack {
+            Color(red: 0.07, green: 0.07, blue: 0.07)
+                .ignoresSafeArea()
+            
+            AddTaskSheet(
+                isPresented: $isPresented,
+                title: $title,
+                description: $description,
+                selectedCategory: $selectedCategory,
+                selectedPriority: $selectedPriority,
+                onSave: onSave
+            )
+        }
     }
 }
 
@@ -411,23 +479,4 @@ struct TaskRow: View {
     }
 }
 
-struct EmptyTaskView: View {
-    var body: some View {
-        VStack {
-            Image("Checklist-rafiki 1")
-                .resizable()
-                .scaledToFit()
-                .padding()
-            VStack(spacing: 10) {
-                Text("What do you want to do today?")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundColor(.white)
-                Text("Tap + to add your tasks")
-                    .font(.system(size: 16, weight: .light))
-                    .foregroundColor(.white)
-            }
-        }
-        .padding()
-    }
-}
 

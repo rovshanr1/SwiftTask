@@ -7,24 +7,47 @@
 
 import SwiftUI
 
+// MARK: - Custom Colors Extension
+extension Color {
+    static let customBackground = Color(red: 0.07, green: 0.07, blue: 0.07)
+    static let customAccent = Color(red: 1.00, green: 0.44, blue: 0.14)
+    static let customGradient = LinearGradient(
+        gradient: Gradient(colors: [Color.customAccent, Color(red: 0.29, green: 0.29, blue: 0.51)]),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+}
+
+// MARK: - IntroView
+/// The main entry point view that handles the app's introduction flow
+/// Manages onboarding, authentication, and initial navigation states
 struct IntroView: View {
+    // MARK: - View Model Properties
     @StateObject private var loginViewModel = LoginViewModel()
     @StateObject private var viewModel = OnboardingViewModel()
-    @AppStorage("isOnboardingSheetShowing") var isOnboardingSheetShowing = true
-    @State private var showContent = false
     
+    // MARK: - App Storage
+    @AppStorage("isOnboardingSheetShowing") var isOnboardingSheetShowing = true
+    
+    // MARK: - View States
+    @State private var showContent = false
     @State private var showHomeScreen = false
     @State private var showRegisterScreen = false
     @State private var showLoginScreen: Bool = false
     @State private var showGuestScreen: Bool = false
     
+    // MARK: - Environment
     @Environment(\.managedObjectContext) private var viewContext
     
+    // MARK: - Body
     var body: some View {
         ZStack {
+            Color.customBackground
+                .ignoresSafeArea()
+            
             if isOnboardingSheetShowing {
                 OnboardingView(viewModel: viewModel) {
-                    withAnimation(.easeInOut(duration: 0.5)) {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                         isOnboardingSheetShowing = false
                     }
                 }
@@ -33,23 +56,28 @@ struct IntroView: View {
             }
             else if showGuestScreen {
                 GuestView()
-                    .transition(.opacity)
+                    .transition(.scale.combined(with: .opacity))
                     .accessibilityIdentifier("GuestView")
             }
             else if showRegisterScreen {
-                CreateAccountView(loginviewModel: loginViewModel, showRegisterScreen: $showRegisterScreen, showLoginScreen: $showLoginScreen)
-                    .transition(.opacity)
+                CreateAccountView(loginviewModel: loginViewModel,
+                                showRegisterScreen: $showRegisterScreen,
+                                showLoginScreen: $showLoginScreen)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .leading)
+                    ))
                     .accessibilityIdentifier("CreateAccountView")
             }
             else {
-                StartScreenView(showHomeScreen: $showHomeScreen, 
-                              showRegisterScreen: $showRegisterScreen, 
+                StartScreenView(showHomeScreen: $showHomeScreen,
+                              showRegisterScreen: $showRegisterScreen,
                               showGuestScreen: $showGuestScreen,
                               showContent: $showContent)
-                    .transition(.opacity)
+                    .transition(.scale.combined(with: .opacity))
                     .accessibilityIdentifier("StartScreenView")
                     .onAppear {
-                        // Delay the appearance of content
+                        // Delay the appearance of content for smooth animation
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             withAnimation(.easeIn(duration: 0.5)) {
                                 showContent = true
@@ -58,94 +86,118 @@ struct IntroView: View {
                     }
             }
         }
-        .animation(.easeInOut(duration: 0.5), value: isOnboardingSheetShowing)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: isOnboardingSheetShowing)
     }
 }
 
+// MARK: - StartScreenView
+/// The initial view shown to users when they first open the app
+/// Provides options for account creation and guest access
 struct StartScreenView: View {
+    // MARK: - Binding Properties
     @Binding var showHomeScreen: Bool
     @Binding var showRegisterScreen: Bool
     @Binding var showGuestScreen: Bool
     @Binding var showContent: Bool
     
+    // MARK: - Constants
+    private let backgroundColors = Color(red: 0.07, green: 0.07, blue: 0.07)
+    private let accentColor = Color(red: 1.00, green: 0.44, blue: 0.14)
+    
+    // MARK: - Body
     var body: some View {
-        ZStack {
-            Color(red: 0.07, green: 0.07, blue: 0.07)
-                .ignoresSafeArea()
-            
-            VStack() {
-                VStack(spacing: 20) {
-                    Image("SwiftTaskLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: UIScreen.main.bounds.width * 0.8)
-                        .accessibilityIdentifier("SwiftTaskLogo")
+        GeometryReader { geometry in
+            ZStack {
+                Color.customBackground
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 40) {
+                    // Logo and Welcome Section
+                    VStack(spacing: 25) {
+                        Image("SwiftTaskLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geometry.size.width * 0.7)
+                            .shadow(color: .customAccent.opacity(0.3), radius: 10)
+                        
+                        if showContent {
+                            welcomeTextSection
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    .padding(.top, geometry.size.height * 0.1)
+                    
+                    Spacer()
                     
                     if showContent {
-                        Text("Welcome to SwiftTask")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                            .accessibilityIdentifier("WelcomeText")
-                            .transition(.opacity)
-                        
-                        Text("To access all features, please log in or create an account.")
-                            .font(.system(size: 16, weight: .light))
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 30)
-                            .accessibilityIdentifier("DescriptionText")
-                            .transition(.opacity)
+                        actionButtonsSection
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
-                
-                Spacer()
-                
-                if showContent {
-                    VStack(spacing: 28) {
-                        Button(action: {
-                            showRegisterScreen = true
-                        }){
-                            Text("Create New Account")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundStyle(.white)
-                                .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .cornerRadius(10)
-                        }
-                        .accessibilityIdentifier("CreateAccountButton")
-                        .transition(.opacity)
-                        
-                        Button(action: {
-                            showGuestScreen = true
-                        }){
-                            Text("Continue as Guest")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundColor(.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color(red: 1.00, green: 0.44, blue: 0.14), lineWidth: 2)
-                                )
-                        }
-                        .accessibilityIdentifier("GuestButton")
-                        .transition(.opacity)
-                    }
-                    .padding(.bottom, 40)
-                    .transition(.opacity)
-                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 40)
         }
-        .accessibilityIdentifier("StartScreenView")
+    }
+    
+    // MARK: - View Components
+    
+    /// Welcome text section with title and description
+    private var welcomeTextSection: some View {
+        VStack(spacing: 16) {
+            Text("Welcome to SwiftTask")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.white)
+            
+            Text("Your personal task management solution for enhanced productivity and organization")
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+    }
+    
+    /// Action buttons for account creation and guest access
+    private var actionButtonsSection: some View {
+        VStack(spacing: 16) {
+            Button(action: {
+                withAnimation(.spring()) {
+                    showRegisterScreen = true
+                }
+            }) {
+                HStack {
+                    Text("Get Started")
+                    Image(systemName: "arrow.right")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .foregroundStyle(.white)
+                .background(Color.customGradient)
+                .cornerRadius(15)
+            }
+            
+            Button(action: {
+                withAnimation(.spring()) {
+                    showGuestScreen = true
+                }
+            }) {
+                Text("Continue as Guest")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15)
+                            .stroke(Color.customAccent, lineWidth: 2)
+                    )
+            }
+        }
     }
 }
 
-#if DEBUG
-struct IntroView_Previews: PreviewProvider {
-    static var previews: some View {
-        IntroView()
-    }
-}
-#endif
+
+
+
+
+

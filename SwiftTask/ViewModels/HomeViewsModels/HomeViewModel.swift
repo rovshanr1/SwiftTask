@@ -81,6 +81,7 @@ enum TaskPriority: Int, CaseIterable {
     }
 }
 
+@MainActor
 class HomeViewModel: ObservableObject {
     @Published var items: [Item] = []
     @Published var completedTasks: [Item] = []
@@ -96,8 +97,11 @@ class HomeViewModel: ObservableObject {
     @Published var userName: String = ""
     @Published var selectedCategory: TaskCategory?
     @Published var selectedPriority: TaskPriority?
+    @Published var errorMessage: String?
+    @Published var showError: Bool = false
     
     private let context: NSManagedObjectContext
+    private let taskService = TaskService.shared
     
     var filteredItems: [Item] {
         if searchText.isEmpty {
@@ -124,7 +128,10 @@ class HomeViewModel: ObservableObject {
         fetchItems()
         fetchUserProfile()
         
-        // Profil değişikliklerini dinle
+        // Start syncing with Firebase
+        startSyncing()
+        
+        // Listen for profile updates
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(profileUpdated),
@@ -159,7 +166,6 @@ class HomeViewModel: ObservableObject {
             }
         }
         
-        // Profil fotoğrafını çek
         if let imageData = CoreDataManager.shared.fetchProfileImage(userId: userID) {
             DispatchQueue.main.async {
                 self.profileImageData = imageData
@@ -168,93 +174,151 @@ class HomeViewModel: ObservableObject {
     }
     
     func fetchItems() {
-            let request: NSFetchRequest<Item> = Item.fetchRequest()
-            request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
-            
-            do {
-                items = try context.fetch(request)
-                
-                // Update filtered lists
-//                let today = Calendar.current.startOfDay(for: Date())
-                completedTasks = items.filter { $0.completed }
-                newItems = items.filter { !$0.completed }
-                
-                // Update task counts
-                updateTaskCounts()
-                
-                // Notify observers
-                objectWillChange.send()
-            } catch {
-                print("Fetch items error: \(error.localizedDescription)")
-            }
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+        
+        do {
+            items = try context.fetch(request)
+            completedTasks = items.filter { $0.completed }
+            newItems = items.filter { !$0.completed }
+            updateTaskCounts()
+            objectWillChange.send()
+        } catch {
+            print("Fetch items error: \(error.localizedDescription)")
         }
+    }
     
     private func updateTaskCounts() {
-            let today = Calendar.current.startOfDay(for: Date())
-            let todayTasks = items.filter { Calendar.current.startOfDay(for: $0.date ?? Date()) == today }
-            
-            taskDoneCount = todayTasks.filter { $0.completed }.count
-            taskLeftCount = todayTasks.filter { !$0.completed }.count
-            
-            // Post notification for profile view update
-            NotificationCenter.default.post(
-                name: .tasksUpdated,
-                object: nil,
-                userInfo: [
-                    "taskDone": taskDoneCount,
-                    "taskLeft": taskLeftCount
-                ]
-            )
+        let today = Calendar.current.startOfDay(for: Date())
+        let todayTasks = items.filter { Calendar.current.startOfDay(for: $0.date ?? Date()) == today }
+        
+        taskDoneCount = todayTasks.filter { $0.completed }.count
+        taskLeftCount = todayTasks.filter { !$0.completed }.count
+        
+        NotificationCenter.default.post(
+            name: .tasksUpdated,
+            object: nil,
+            userInfo: [
+                "taskDone": taskDoneCount,
+                "taskLeft": taskLeftCount
+            ]
+        )
+    }
+    
+    private func startSyncing() {
+        Task {
+            do {
+                isLoading = true
+                try await taskService.syncTasks(context: context)
+                isLoading = false
+            } catch {
+                isLoading = false
+                handleError(error)
+            }
         }
+    }
+    
+    private func handleError(_ error: Error) {
+        errorMessage = if let taskError = error as? TaskServiceError {
+            switch taskError {
+            case .userNotFound:
+                "Kullanıcı bulunamadı. Lütfen tekrar giriş yapın."
+            case .saveFailed:
+                "Görev kaydedilemedi."
+            case .updateFailed:
+                "Görev güncellenemedi."
+            case .deleteFailed:
+                "Görev silinemedi."
+            case .invalidTaskId:
+                "Geçersiz görev tanımlayıcısı."
+            case .firebaseError(let error):
+                "Firebase hatası: \(error.localizedDescription)"
+            case .coreDataError(let error):
+                "Veritabanı hatası: \(error.localizedDescription)"
+            }
+        } else {
+            error.localizedDescription
+        }
+        showError = true
+    }
     
     func addTask(title: String, description: String, date: Date?, category: TaskCategory? = nil, priority: TaskPriority? = nil) {
-        let newItem = Item(context: context)
-        newItem.title = title
-        newItem.taskDescription = description
-        newItem.date = date ?? Date()
-        newItem.id = UUID()
-        newItem.completed = false
-        newItem.category = category?.rawValue
-        newItem.priority = Int16(priority?.rawValue ?? 0)
-        
-        saveContext()
+        Task {
+            do {
+                isLoading = true
+                try await taskService.addTask(
+                    title: title,
+                    description: description,
+                    date: date ?? Date(),
+                    category: category,
+                    priority: priority,
+                    context: context
+                )
+                isLoading = false
+                fetchItems()
+            } catch {
+                isLoading = false
+                handleError(error)
+            }
+        }
     }
-
     
     func deleteSingleTask(_ item: Item) {
-        context.delete(item)
-        saveContext()
+        Task {
+            do {
+                isLoading = true
+                try await taskService.deleteTask(item: item, context: context)
+                isLoading = false
+                fetchItems()
+            } catch {
+                isLoading = false
+                handleError(error)
+            }
+        }
     }
     
     func editTask(item: Item, newTitle: String, newDescription: String, category: TaskCategory? = nil, priority: TaskPriority? = nil) {
-        item.title = newTitle
-        item.taskDescription = newDescription
-        item.category = category?.rawValue
-        if let priority = priority {
-            item.priority = Int16(priority.rawValue)
+        Task {
+            do {
+                isLoading = true
+                try await taskService.updateTask(
+                    item: item,
+                    title: newTitle,
+                    description: newDescription,
+                    category: category,
+                    priority: priority,
+                    context: context
+                )
+                isLoading = false
+                fetchItems()
+            } catch {
+                isLoading = false
+                handleError(error)
+            }
         }
-        saveContext()
     }
     
     func toggleTaskCompletion(_ item: Item) {
-        item.completed.toggle()
-        saveContext()
-        fetchItems()
+        Task {
+            do {
+                try await taskService.toggleTaskCompletion(item: item, context: context)
+                fetchItems()
+            } catch {
+                handleError(error)
+            }
+        }
     }
     
-    private func saveContext() {
-        do {
-            try context.save()
-            fetchItems()  // Refresh the list after saving
-        } catch {
-            print("Core Data save error: \(error.localizedDescription)")
-        }
+    func clearError() {
+        errorMessage = nil
+        showError = false
     }
 }
 
 extension Notification.Name {
     static let tasksUpdated = Notification.Name("tasksUpdated")
     static let profileUpdated = Notification.Name("profileUpdated")
+    static let userSignedOut = Notification.Name("userSignedOut")
 }
 
 
