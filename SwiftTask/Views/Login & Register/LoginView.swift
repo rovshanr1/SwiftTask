@@ -92,32 +92,35 @@ struct LoginView: View {
                             // Login Button
                             Button(action: {
                                 if viewModel.email.isEmpty || viewModel.password.isEmpty {
-                                    viewModel.error = "Email and password cannot be empty."
+                                    viewModel.error = "❌ Email and password cannot be empty."
                                 } else {
                                     viewModel.login { success in
                                         DispatchQueue.main.async {
                                             if success {
                                                 navigationToHome = true
-                                            } else {
-                                                viewModel.error = "Login failed. Please check your email's."
                                             }
                                         }
                                     }
                                 }
                             }) {
-                                if viewModel.isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle())
-                                        .foregroundStyle(.white)
-                                } else {
-                                    Text("Login")
-                                        .font(.headline)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .background(globalGradient)
-                                        .cornerRadius(10)
+                                HStack {
+                                    Spacer()
+                                    if viewModel.isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle())
+                                            .foregroundStyle(.white)
+                                            .scaleEffect(1.0)
+                                    } else {
+                                        Text("Login")
+                                            .font(.headline)
+                                    }
+                                    Spacer()
                                 }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .background(globalGradient)
+                                .cornerRadius(10)
                             }
                             .disabled(viewModel.isLoading)
                             

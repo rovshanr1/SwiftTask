@@ -98,21 +98,24 @@ struct CreateAccountView: View {
         Button(action: {
             handleRegistration()
         }) {
-            ZStack {
+            HStack {
+                Spacer()
                 if viewModel.isLoading {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                         .foregroundStyle(.white)
+                        .scaleEffect(1.0)
                 } else {
                     Text("Register")
                         .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .foregroundStyle(.white)
-                        .background(Color.customGradient)
-                        .cornerRadius(15)
                 }
+                Spacer()
             }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .foregroundStyle(.white)
+            .background(Color.customGradient)
+            .cornerRadius(15)
         }
         .disabled(viewModel.isLoading)
         .padding(.top, 20)

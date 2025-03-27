@@ -12,6 +12,7 @@ import AVFoundation
 struct ChangeProfileImageView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var showingCamera = false
@@ -23,10 +24,10 @@ struct ChangeProfileImageView: View {
             VStack(spacing: 8) {
                 Text("Change Profile Image")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
             
@@ -38,22 +39,22 @@ struct ChangeProfileImageView: View {
                         .scaledToFill()
                         .frame(width: 120, height: 120)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
-                        .shadow(color: Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.3), radius: 10)
+                        .overlay(Circle().stroke(themeManager.currentTheme.text.opacity(0.1), lineWidth: 1))
+                        .shadow(color: themeManager.currentTheme.accent.opacity(0.3), radius: 10)
                 } else {
                     Image(systemName: "person.circle.fill")
                         .resizable()
                         .scaledToFill()
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                         .frame(width: 120, height: 120)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.1), lineWidth: 1))
-                        .shadow(color: Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.3), radius: 10)
+                        .overlay(Circle().stroke(themeManager.currentTheme.text.opacity(0.1), lineWidth: 1))
+                        .shadow(color: themeManager.currentTheme.accent.opacity(0.3), radius: 10)
                 }
                 
                 Text("Upload a photo of yourself")
                     .font(.system(size: 14))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
@@ -67,19 +68,10 @@ struct ChangeProfileImageView: View {
                         Text("Choose from Library")
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.00, green: 0.44, blue: 0.14),
-                                Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .background(themeManager.currentTheme.accent)
                     .cornerRadius(12)
                 }
                 .onChange(of: selectedItem) {
@@ -100,10 +92,10 @@ struct ChangeProfileImageView: View {
                         Text("Take Photo")
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .background(themeManager.currentTheme.secondaryBackground)
                     .cornerRadius(12)
                 }
                 
@@ -118,7 +110,7 @@ struct ChangeProfileImageView: View {
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                     }
                     .transition(.opacity)
@@ -128,7 +120,7 @@ struct ChangeProfileImageView: View {
             Spacer()
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .presentationDetents([.height(520)])
         .sheet(isPresented: $showingCamera) {
             ImagePicker(selectedImage: $selectedImage, viewModel: viewModel)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ChangePasswordView: View {
     @Environment(\.dismiss) var dismiss
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var currentPassword: String = ""
     @State private var newPassword: String = ""
     @State private var confirmNewPassword: String = ""
@@ -22,10 +23,10 @@ struct ChangePasswordView: View {
             VStack(spacing: 8) {
                 Text("Change Password")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
             
@@ -34,19 +35,22 @@ struct ChangePasswordView: View {
                 PasswordField(
                     title: "Current Password",
                     text: $currentPassword,
-                    placeholder: "Enter current password"
+                    placeholder: "Enter current password",
+                    theme: themeManager.currentTheme
                 )
                 
                 PasswordField(
                     title: "New Password",
                     text: $newPassword,
-                    placeholder: "Enter new password"
+                    placeholder: "Enter new password",
+                    theme: themeManager.currentTheme
                 )
                 
                 PasswordField(
                     title: "Confirm Password",
                     text: $confirmNewPassword,
-                    placeholder: "Confirm new password"
+                    placeholder: "Confirm new password",
+                    theme: themeManager.currentTheme
                 )
             }
             .padding(.top, 8)
@@ -67,7 +71,7 @@ struct ChangePasswordView: View {
                     ZStack {
                         if isLoading {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .progressViewStyle(CircularProgressViewStyle(tint: themeManager.currentTheme.text))
                         } else {
                             Text("Save Changes")
                                 .font(.system(size: 16, weight: .semibold))
@@ -75,17 +79,8 @@ struct ChangePasswordView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.00, green: 0.44, blue: 0.14),
-                                Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .foregroundStyle(.white)
+                    .background(themeManager.currentTheme.accent)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .cornerRadius(12)
                 }
                 .disabled(isLoading)
@@ -93,17 +88,17 @@ struct ChangePasswordView: View {
                 Button(action: { dismiss() }) {
                     Text("Cancel")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .foregroundStyle(themeManager.currentTheme.accent)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                 }
                 .disabled(isLoading)
             }
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .presentationDetents([.height(520)])
     }
 
@@ -136,24 +131,25 @@ struct PasswordField: View {
     let title: String
     @Binding var text: String
     let placeholder: String
+    let theme: ThemeColors
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14))
-                .foregroundStyle(.gray)
+                .foregroundStyle(theme.secondaryText)
             
             SecureField("", text: $text, prompt: Text(placeholder)
-                .foregroundStyle(.gray))
-                .foregroundColor(.white)
+                .foregroundStyle(theme.secondaryText))
+                .foregroundColor(theme.text)
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .fill(theme.secondaryBackground)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(theme.text.opacity(0.1), lineWidth: 1)
                 )
         }
     }

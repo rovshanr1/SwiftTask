@@ -10,6 +10,7 @@ import CoreData
 
 struct CalendarView: View {
     @StateObject private var viewModel: CalendarViewModel
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var navigateToHome = false
     @State private var navigateToProfile = false
     @State private var navigateToFocus = false
@@ -21,43 +22,49 @@ struct CalendarView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.07, green: 0.07, blue: 0.07)
+            themeManager.currentTheme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header
-                    Text("Profile")
-                        .font(.title)
-                        .foregroundColor(.white)
-                        .padding(.top, 20)
-                        .padding(.bottom, 10)
+                Text("Calendar")
+                    .font(.title)
+                    .foregroundStyle(themeManager.currentTheme.text)
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
                 
                 // Category Selector with Gradient Background
                 CategorySelectorView(
                     selectedCategory: $viewModel.selectedCategory,
-                    categories: TaskCategory.allCases
+                    categories: TaskCategory.allCases,
+                    theme: themeManager.currentTheme
                 )
                 .padding(.vertical, 8)
                 
                 // Week View with Animation
                 WeekView(
-                    selectedDate: $viewModel.selectedDate,
+                    selectedDate: Binding(
+                        get: { viewModel.selectedDate },
+                        set: { viewModel.setSelectedDate($0) }
+                    ),
                     daysInWeek: viewModel.getDaysInWeek(),
                     hasCompletedTasks: viewModel.hasCompletedTasks,
-                    totalTasks: viewModel.totalTasks
+                    totalTasks: viewModel.totalTasks,
+                    theme: themeManager.currentTheme
                 )
                 .padding(.vertical)
                 
                 // Selected Date Header
                 Text(viewModel.formattedDate(viewModel.selectedDate))
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .padding(.vertical, 8)
                 
                 // Tasks List with Empty State
                 TaskListView(
                     tasks: viewModel.tasksForDate(viewModel.selectedDate),
-                    onComplete: viewModel.toggleTaskCompletion
+                    onComplete: viewModel.toggleTaskCompletion,
+                    theme: themeManager.currentTheme
                 )
                 
                 Spacer()
@@ -87,15 +94,14 @@ struct CalendarView: View {
 
 // MARK: - Supporting Views
 
-
-
 struct CategorySelectorView: View {
     @Binding var selectedCategory: TaskCategory
     let categories: [TaskCategory]
+    let theme: ThemeColors
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            LazyHStack(spacing: 12) {
                 ForEach(categories, id: \.self) { category in
                     CategoryButton(
                         category: category,
@@ -111,16 +117,7 @@ struct CategorySelectorView: View {
             }
             .padding(.horizontal)
         }
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.07, green: 0.07, blue: 0.07),
-                    Color(red: 0.07, green: 0.07, blue: 0.07).opacity(0.8)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background(theme.background)
     }
 }
 
@@ -129,16 +126,18 @@ struct WeekView: View {
     let daysInWeek: [Date]
     let hasCompletedTasks: (Date) -> Bool
     let totalTasks: (Date) -> Int
+    let theme: ThemeColors
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 20) {
+            LazyHStack(spacing: 20) {
                 ForEach(daysInWeek, id: \.self) { date in
                     DayView(
                         date: date,
                         isSelected: Calendar.current.isDate(date, inSameDayAs: selectedDate),
                         hasCompletedTasks: hasCompletedTasks(date),
-                        totalTasks: totalTasks(date)
+                        totalTasks: totalTasks(date),
+                        theme: theme
                     ) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             selectedDate = date
@@ -156,6 +155,7 @@ struct DayView: View {
     let isSelected: Bool
     let hasCompletedTasks: Bool
     let totalTasks: Int
+    let theme: ThemeColors
     let onTap: () -> Void
     
     private static let weekDayFormatter: DateFormatter = {
@@ -175,12 +175,12 @@ struct DayView: View {
             Text(Self.weekDayFormatter.string(from: date).uppercased())
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : .gray)
+                .foregroundStyle(isSelected ? theme.text : theme.secondaryText)
             
             Text(Self.dayFormatter.string(from: date))
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(isSelected ? .white : .gray)
+                .foregroundStyle(isSelected ? theme.text : theme.secondaryText)
             
             if totalTasks > 0 {
                 HStack(spacing: 4) {
@@ -191,16 +191,16 @@ struct DayView: View {
                     Text("\(totalTasks)")
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(hasCompletedTasks ? .green : .gray)
+                        .foregroundStyle(hasCompletedTasks ? .green : theme.secondaryText)
                 }
             }
         }
         .frame(width: 50, height: 85)
-        .background(isSelected ? Color.orange.opacity(0.2) : Color.clear)
+        .background(isSelected ? theme.accent.opacity(0.2) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1.5)
+                .stroke(isSelected ? theme.accent : Color.clear, lineWidth: 1.5)
         )
         .onTapGesture(perform: onTap)
     }
@@ -209,15 +209,16 @@ struct DayView: View {
 struct TaskListView: View {
     let tasks: [Item]
     let onComplete: (Item) -> Void
+    let theme: ThemeColors
     
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 15) {
                 if tasks.isEmpty {
-                    EmptyTasksView()
+                    EmptyTasksView(theme: theme)
                 } else {
                     ForEach(tasks) { task in
-                        TaskCardView(task: task, onComplete: onComplete)
+                        TaskCardView(task: task, onComplete: onComplete, theme: theme)
                             .transition(.opacity)
                     }
                 }
@@ -228,17 +229,19 @@ struct TaskListView: View {
 }
 
 struct EmptyTasksView: View {
+    let theme: ThemeColors
+    
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.clock")
                 .font(.system(size: 48))
-                .foregroundColor(.gray)
+                .foregroundStyle(theme.secondaryText)
             Text("No tasks scheduled for this day")
                 .font(.headline)
-                .foregroundColor(.gray)
+                .foregroundStyle(theme.secondaryText)
             Text("Tap + to add a new task")
                 .font(.subheadline)
-                .foregroundColor(.gray.opacity(0.8))
+                .foregroundStyle(theme.secondaryText.opacity(0.8))
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
@@ -248,18 +251,19 @@ struct EmptyTasksView: View {
 struct TaskCardView: View {
     let task: Item
     let onComplete: (Item) -> Void
+    let theme: ThemeColors
     
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(task.title ?? "Unnamed Task")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(theme.text)
                 
                 if let description = task.taskDescription, !description.isEmpty {
                     Text(description)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(theme.secondaryText)
                         .lineLimit(2)
                 }
                 
@@ -270,7 +274,7 @@ struct TaskCardView: View {
                         Text(formatTime(date))
                             .font(.caption)
                     }
-                    .foregroundColor(.gray)
+                    .foregroundStyle(theme.secondaryText)
                 }
             }
             
@@ -281,7 +285,7 @@ struct TaskCardView: View {
                     Circle()
                         .stroke(lineWidth: 1.5)
                         .frame(width: 24, height: 24)
-                        .foregroundColor(task.completed ? .green : .gray)
+                        .foregroundColor(task.completed ? .green : theme.secondaryText)
                     
                     if task.completed {
                         Image(systemName: "checkmark")
@@ -292,9 +296,8 @@ struct TaskCardView: View {
             }
         }
         .padding()
-        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+        .background(theme.secondaryBackground)
         .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
     
     private func formatTime(_ date: Date) -> String {

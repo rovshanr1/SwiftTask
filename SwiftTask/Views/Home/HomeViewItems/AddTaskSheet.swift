@@ -10,6 +10,7 @@ struct AddTaskSheet: View {
     @State private var showAllCategories = false
     @State private var enableReminder = false
     @State private var reminderDate = Date()
+    @StateObject private var themeManager = ThemeManager.shared
     var onSave: () -> Void
     
     private let mainCategories: [TaskCategory] = [.work, .personal, .home]
@@ -21,10 +22,10 @@ struct AddTaskSheet: View {
             VStack(spacing: 8) {
                 Text("Add Task")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
             
@@ -49,16 +50,16 @@ struct AddTaskSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("Category")
-                                .foregroundColor(.white)
+                                .foregroundStyle(themeManager.currentTheme.text)
                                 .font(.headline)
                             Spacer()
                             Button(action: { showAllCategories.toggle() }) {
                                 HStack(spacing: 4) {
                                     Text(showAllCategories ? "Show Less" : "Show More")
                                         .font(.system(size: 14))
-                                        .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                        .foregroundStyle(themeManager.currentTheme.accent)
                                     Image(systemName: showAllCategories ? "chevron.up" : "chevron.down")
-                                        .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                        .foregroundStyle(themeManager.currentTheme.accent)
                                 }
                             }
                         }
@@ -92,7 +93,7 @@ struct AddTaskSheet: View {
                     // Priority
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Priority")
-                            .foregroundColor(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                             .font(.headline)
                         
                         HStack(spacing: 12) {
@@ -112,19 +113,19 @@ struct AddTaskSheet: View {
                         Toggle(isOn: $enableReminder) {
                             HStack {
                                 Image(systemName: "bell.fill")
-                                    .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                    .foregroundStyle(themeManager.currentTheme.accent)
                                 Text("Set Reminder")
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(themeManager.currentTheme.text)
                                     .font(.headline)
                             }
                         }
-                        .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .tint(themeManager.currentTheme.accent)
                         
                         if enableReminder {
                             DatePicker("Reminder Time", selection: $reminderDate, displayedComponents: [.date, .hourAndMinute])
                                 .datePickerStyle(.graphical)
                                 .colorScheme(.dark)
-                                .accentColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .tint(themeManager.currentTheme.accent)
                         }
                     }
                     .padding(.vertical, 8)
@@ -137,10 +138,10 @@ struct AddTaskSheet: View {
                 Button(action: { isPresented = false }) {
                     Text("Cancel")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .foregroundStyle(themeManager.currentTheme.accent)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                 }
                 
@@ -153,35 +154,24 @@ struct AddTaskSheet: View {
                 }) {
                     Text("Create")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.00, green: 0.44, blue: 0.14),
-                                    Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .background(themeManager.currentTheme.accent)
                         .cornerRadius(12)
                 }
             }
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .presentationDetents([.large])
     }
     
     private func checkAndScheduleNotification() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             if settings.authorizationStatus == .authorized {
-                // Bildirim izni varsa, hatırlatıcıyı planla
                 print("Reminder scheduled for: \(reminderDate)")
             } else {
-                // Bildirim izni yoksa, izin iste
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
                     if granted {
                         print("Notification permission granted")

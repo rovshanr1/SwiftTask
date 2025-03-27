@@ -4,6 +4,7 @@ struct ChangeUsernameView: View {
     @Binding var isPresented: Bool
     @Binding var newUserName: String
     @ObservedObject var viewModel: ProfileViewModel
+    @StateObject private var themeManager = ThemeManager.shared
 
     var body: some View {
         VStack(spacing: 24) {
@@ -11,10 +12,10 @@ struct ChangeUsernameView: View {
             VStack(spacing: 8) {
                 Text("Change Username")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
 
@@ -22,19 +23,19 @@ struct ChangeUsernameView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("New Username")
                     .font(.system(size: 14))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText)
                 
                 TextField("", text: $newUserName, prompt: Text("Enter your new username")
-                    .foregroundStyle(.gray))
-                    .foregroundColor(.white)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText))
+                    .foregroundColor(themeManager.currentTheme.text)
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.21, green: 0.21, blue: 0.21))
+                            .fill(themeManager.currentTheme.secondaryBackground)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(themeManager.currentTheme.text.opacity(0.1), lineWidth: 1)
                     )
             }
             .padding(.top, 8)
@@ -51,19 +52,10 @@ struct ChangeUsernameView: View {
                 }) {
                     Text("Save Changes")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.00, green: 0.44, blue: 0.14),
-                                    Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .background(themeManager.currentTheme.accent)
                         .cornerRadius(12)
                 }
                 
@@ -72,16 +64,16 @@ struct ChangeUsernameView: View {
                 }) {
                     Text("Cancel")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .foregroundStyle(themeManager.currentTheme.accent)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                 }
             }
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .presentationDetents([.height(320)])
     }
 } 

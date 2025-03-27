@@ -4,6 +4,7 @@ import UserNotifications
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var showingSheet = false
     @State private var newTaskTitle = ""
     @State private var newTaskDescription = ""
@@ -26,7 +27,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 0.07, green: 0.07, blue: 0.07)
+                themeManager.currentTheme.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -112,11 +113,11 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Hello,")
                     .font(.title2)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText)
                 Text(viewModel.userName)
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
             }
             Spacer()
             
@@ -136,7 +137,7 @@ struct HomeView: View {
                 }) {
                     Image(systemName: "bell.badge.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        .foregroundStyle(themeManager.currentTheme.accent)
                 }
                 
                 NavigationLink(destination: ProfileView(homeViewModel: viewModel)) {
@@ -161,7 +162,7 @@ struct HomeView: View {
                 title: "Remaining",
                 count: viewModel.taskLeftCount,
                 icon: "clock.fill",
-                color: .orange
+                color: themeManager.currentTheme.accent
             )
         }
         .padding(.horizontal)
@@ -171,10 +172,10 @@ struct HomeView: View {
         HStack {
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText)
                 TextField("Search your tasks...", text: $viewModel.searchText)
-                    .foregroundColor(.white)
-                    .accentColor(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
+                    .tint(themeManager.currentTheme.text)
                     .onChange(of: viewModel.searchText) { oldValue, newValue in
                         viewModel.isSearching = !viewModel.searchText.isEmpty
                     }
@@ -188,12 +189,12 @@ struct HomeView: View {
                         hideKeyboard()
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(themeManager.currentTheme.secondaryText)
                     }
                 }
             }
             .padding(12)
-            .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+            .background(themeManager.currentTheme.secondaryBackground)
             .cornerRadius(12)
         }
         .padding(.horizontal)
@@ -270,6 +271,7 @@ struct TaskSectionView: View {
     let onDelete: (Item) -> Void
     let onEdit: (Item, String, String, TaskCategory?, TaskPriority?) -> Void
     let onComplete: (Item) -> Void
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -279,10 +281,10 @@ struct TaskSectionView: View {
                 HStack {
                     Text(title)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .foregroundColor(.gray)
+                        .foregroundStyle(themeManager.currentTheme.secondaryText)
                 }
                 .padding(.horizontal)
             }
@@ -311,10 +313,11 @@ struct AddTaskSheetContainer: View {
     @Binding var selectedCategory: TaskCategory?
     @Binding var selectedPriority: TaskPriority?
     let onSave: () -> Void
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         ZStack {
-            Color(red: 0.07, green: 0.07, blue: 0.07)
+            themeManager.currentTheme.background
                 .ignoresSafeArea()
             
             AddTaskSheet(
@@ -332,18 +335,19 @@ struct AddTaskSheetContainer: View {
 struct TaskHeaderView: View {
     let title: String
     @Binding var isExpanded: Bool
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         HStack {
             Text(title)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(themeManager.currentTheme.text)
          
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                .foregroundColor(.gray)
+                .foregroundStyle(themeManager.currentTheme.secondaryText)
         }
         .padding()
-        .background(Color.gray.opacity(0.2))
+        .background(themeManager.currentTheme.secondaryBackground.opacity(0.2))
         .cornerRadius(10)
         .padding(.horizontal)
         .onTapGesture {
@@ -359,6 +363,7 @@ struct TaskRow: View {
     var onDelete: () -> Void
     var onEdit: (Item, String, String, TaskCategory?, TaskPriority?) -> Void
     var onComplete: (Item) -> Void
+    @StateObject private var themeManager = ThemeManager.shared
 
     @State private var isDescriptionVisible = false
     @State private var isEditing = false
@@ -388,15 +393,15 @@ struct TaskRow: View {
                 VStack(alignment: .leading) {
                     Text(item.title ?? "Unnamed Task")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                     
                     if let category = taskCategory {
                         HStack(spacing: 4) {
                             Image(systemName: category.icon)
-                                .foregroundColor(category.color)
+                                .foregroundStyle(category.color)
                             Text(category.rawValue)
                                 .font(.caption)
-                                .foregroundColor(category.color)
+                                .foregroundStyle(category.color)
                         }
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
@@ -410,7 +415,7 @@ struct TaskRow: View {
                 if let priority = taskPriority {
                     Text(priority.title)
                         .font(.caption)
-                        .foregroundColor(priority.color)
+                        .foregroundStyle(priority.color)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
                         .background(priority.color.opacity(0.2))
@@ -424,7 +429,7 @@ struct TaskRow: View {
                     }
                 }) {
                     Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(item.completed ? .green : .white)
+                        .foregroundStyle(item.completed ? .green : themeManager.currentTheme.text)
                         .font(.system(size: 24))
                         .contentShape(Rectangle())
                 }
@@ -434,12 +439,12 @@ struct TaskRow: View {
             if isDescriptionVisible, let description = item.taskDescription, !description.isEmpty {
                 Text(description)
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(themeManager.currentTheme.secondaryText)
                     .transition(.opacity)
             }
         }
         .padding()
-        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+        .background(themeManager.currentTheme.secondaryBackground)
         .cornerRadius(10)
         .padding(.horizontal)
         .onTapGesture {
@@ -463,7 +468,7 @@ struct TaskRow: View {
         }
         .sheet(isPresented: $isEditing) {
             ZStack {
-                Color(red: 0.07, green: 0.07, blue: 0.07)
+                themeManager.currentTheme.background
                     .ignoresSafeArea()
                 
                 EditTaskSheet(

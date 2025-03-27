@@ -4,6 +4,9 @@ import PhotosUI
 struct ProfileView: View {
     @ObservedObject var homeViewModel: HomeViewModel
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
+    @Environment(\.theme) var theme
+    
     @State private var navigateToHome = false
     @State private var navigateToProfile = true
     @State private var navigateToFocus = false
@@ -13,6 +16,7 @@ struct ProfileView: View {
     @State private var showImagePicker = false
     @State private var showChangePasswordView = false
     @State private var showAboutView = false
+    @State private var showThemeView = false
     @State private var newUserName = ""
     @State private var isLoggedOut = false
     @State private var deleteAccountPassword = ""
@@ -26,7 +30,7 @@ struct ProfileView: View {
                     .interactiveDismissDisabled()
             } else {
                 ZStack {
-                    Color(red: 0.07, green: 0.07, blue: 0.07)
+                    themeManager.currentTheme.background
                         .ignoresSafeArea()
                     
                     VStack {
@@ -73,6 +77,7 @@ struct ProfileView: View {
                     }
                 } message: {
                     Text("This action cannot be undone. Please enter your password to confirm.")
+                        .foregroundColor(themeManager.currentTheme.text)
                 }
                 .alert("Error", isPresented: $viewModel.isShowingDeleteAccountConfirmation) {
                     Button("OK", role: .cancel) { }
@@ -88,7 +93,7 @@ struct ProfileView: View {
         VStack(spacing: 20) {
             Text("Profile")
                 .font(.title)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.text)
                 .padding(.top, 20)
                 .padding(.bottom, 10)
             
@@ -101,51 +106,51 @@ struct ProfileView: View {
                             .scaledToFill()
                             .frame(width: 100, height: 100)
                             .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                            .overlay(Circle().stroke(themeManager.currentTheme.text.opacity(0.3), lineWidth: 1))
                             .shadow(radius: 5)
                     } else {
                         Image(systemName: "person.circle.fill")
                             .resizable()
                             .scaledToFill()
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                             .frame(width: 100, height: 100)
                             .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                            .overlay(Circle().stroke(themeManager.currentTheme.text.opacity(0.3), lineWidth: 1))
                             .shadow(radius: 5)
                     }
                     
                     // User Info
                     Text(user.userName)
                         .font(.title)
-                        .foregroundColor(.white)
+                        .foregroundColor(themeManager.currentTheme.text)
                     
                     // Task Stats
                     HStack(spacing: 20) {
                         VStack {
                             Text("\(homeViewModel.newItems.count)")
                                 .font(.title2)
-                                .foregroundColor(.white)
+                                .foregroundColor(themeManager.currentTheme.text)
                             Text("Tasks Left")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(themeManager.currentTheme.secondaryText)
                         }
                         .padding()
                         .frame(width: 154, height: 58)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21).opacity(0.3))
+                        .background(themeManager.currentTheme.secondaryBackground.opacity(0.3))
                         .cornerRadius(12)
                         .shadow(radius: 5)
                         
                         VStack {
                             Text("\(homeViewModel.completedTasks.count)")
                                 .font(.title2)
-                                .foregroundColor(.white)
+                                .foregroundColor(themeManager.currentTheme.text)
                             Text("Tasks Done")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(themeManager.currentTheme.secondaryText)
                         }
                         .padding()
                         .frame(width: 154, height: 58)
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21).opacity(0.3))
+                        .background(themeManager.currentTheme.secondaryBackground.opacity(0.3))
                         .cornerRadius(12)
                         .shadow(radius: 5)
                     }
@@ -154,7 +159,7 @@ struct ProfileView: View {
                 settingsList()
             } else {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .progressViewStyle(CircularProgressViewStyle(tint: themeManager.currentTheme.text))
                     .scaleEffect(1.5)
             }
         }
@@ -163,39 +168,41 @@ struct ProfileView: View {
     @ViewBuilder
     private func settingsList() -> some View {
         List {
-            Section(header: Text("App Settings").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
+            Section(header: Text("App Settings").foregroundStyle(themeManager.currentTheme.secondaryText)) {
                 // Notifications
                 Button(action: { showNotificationSettings = true }) {
                     HStack {
                         Image(systemName: "bell.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("Notifications")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 .sheet(isPresented: $showNotificationSettings) {
                     NotificationSettingsView(context: PersistenceController.shared.viewContext)
-                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
                 // App Theme
-                Button(action: {
-                    // TODO: Implement theme settings
-                }) {
+                Button(action: { showThemeView = true }) {
                     HStack {
                         Image(systemName: "paintbrush.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("App Theme")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
+                }
+                .sheet(isPresented: $showThemeView) {
+                    AppThemeView()
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
                 // Language
@@ -204,16 +211,16 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Image(systemName: "globe")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("Language")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Text("English")
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(themeManager.currentTheme.secondaryText)
                             .font(.system(size: 14))
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 
@@ -221,75 +228,75 @@ struct ProfileView: View {
                 Button(action: { showAboutView = true }) {
                     HStack {
                         Image(systemName: "info.circle.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("About SwiftTask")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 .sheet(isPresented: $showAboutView) {
                     AboutSwiftTaskView()
-                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
             }
-            .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+            .listRowBackground(themeManager.currentTheme.background)
 
-            Section(header: Text("Account").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
+            Section(header: Text("Account").foregroundStyle(themeManager.currentTheme.secondaryText)) {
                 // Change account name button
                 Button(action: { showingCustomModal = true }) {
                     HStack {
                         Image(systemName: "person.text.rectangle.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("Change account name")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 .sheet(isPresented: $showingCustomModal) {
                     ChangeUsernameView(isPresented: $showingCustomModal, newUserName: $newUserName, viewModel: viewModel)
-                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
                 // Change image button
                 Button(action: { showImagePicker = true }) {
                     HStack {
                         Image(systemName: "person.crop.circle.fill.badge.plus")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("Change account Image")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 .sheet(isPresented: $showImagePicker) {
                     ChangeProfileImageView(viewModel: viewModel)
-                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
                 // Change password button
                 Button(action: { showChangePasswordView = true }) {
                     HStack {
                         Image(systemName: "lock.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         Text("Change account password")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                     }
                 }
                 .sheet(isPresented: $showChangePasswordView) {
                     ChangePasswordView(viewModel: viewModel)
-                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                        .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
                 // Delete Account Button
@@ -306,9 +313,9 @@ struct ProfileView: View {
                     }
                 }
             }
-            .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+            .listRowBackground(themeManager.currentTheme.background)
             
-            Section(header: Text("SwiftTask").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
+            Section(header: Text("SwiftTask").foregroundStyle(themeManager.currentTheme.secondaryText)) {
                 Button(action: {
                     viewModel.logout()
                     isLoggedOut = true
@@ -317,14 +324,14 @@ struct ProfileView: View {
                         Image("logout")
                             .frame(width: 24, height: 24)
                         Text("Logout")
-                            .foregroundStyle(Color(red: 1.00, green: 0.29, blue: 0.29))
+                            .foregroundStyle(.red)
                     }
                 }
             }
-            .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+            .listRowBackground(themeManager.currentTheme.background)
         }
         .scrollContentBackground(.hidden)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
     }
 }
 

@@ -26,6 +26,7 @@ enum TimeFrame: String, CaseIterable {
 
 struct FocusView: View {
     @StateObject private var viewModel = FocusViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var selectedTimeFrame = TimeFrame.week
     @State private var navigateToHome = false
     @State private var navigateToProfile = false
@@ -34,12 +35,17 @@ struct FocusView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.07, green: 0.07, blue: 0.07)
+            themeManager.currentTheme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header
-                FocusHeaderView(title: "Focus Mode")
+                Text("Focus Mode")
+                    .font(.title)
+                    .foregroundStyle(themeManager.currentTheme.text)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
@@ -49,6 +55,7 @@ struct FocusView: View {
                             selectedDuration: viewModel.selectedDuration,
                             isTimerRunning: viewModel.isTimerRunning,
                             formattedTime: viewModel.formatTime(viewModel.timeRemaining),
+                            theme: themeManager.currentTheme,
                             onTap: { 
                                 if !viewModel.isTimerRunning {
                                     viewModel.showingTimerPicker = true
@@ -57,11 +64,12 @@ struct FocusView: View {
                         )
                         
                         // Notification Text
-                        NotificationInfoView()
+                        NotificationInfoView(theme: themeManager.currentTheme)
                         
                         // Focus Button
                         FocusActionButton(
                             isTimerRunning: viewModel.isTimerRunning,
+                            theme: themeManager.currentTheme,
                             onStart: viewModel.startFocusMode,
                             onStop: viewModel.stopFocusMode
                         )
@@ -69,13 +77,13 @@ struct FocusView: View {
                         // Overview Section
                         FocusOverviewSection(
                             selectedTimeFrame: $selectedTimeFrame,
-                            viewModel: viewModel
+                            viewModel: viewModel,
+                            theme: themeManager.currentTheme
                         )
                     }
                     .padding(.bottom, 90)
                 }
                 .onChange(of: viewModel.isTimerRunning) { oldValue, newValue in
-                    // Timer durumu değiştiğinde UI'ı güncelle
                     viewModel.objectWillChange.send()
                 }
                 
@@ -103,7 +111,8 @@ struct FocusView: View {
         .sheet(isPresented: $viewModel.showingTimerPicker) {
             TimerPickerSheet(
                 viewModel: viewModel,
-                isPresented: $viewModel.showingTimerPicker
+                isPresented: $viewModel.showingTimerPicker,
+                theme: themeManager.currentTheme
             )
         }
     }
@@ -130,33 +139,20 @@ struct FocusTimerView: View {
     let selectedDuration: TimeInterval
     let isTimerRunning: Bool
     let formattedTime: String
+    let theme: ThemeColors
     let onTap: () -> Void
     
     var body: some View {
         ZStack {
             // Background Circle
             Circle()
-                .stroke(Color(red: 0.21, green: 0.21, blue: 0.21), lineWidth: 20)
+                .stroke(theme.secondaryBackground, lineWidth: 20)
                 .frame(width: 300, height: 300)
             
             // Progress Circle
             Circle()
                 .trim(from: 0.0, to: timeRemaining / selectedDuration)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.00, green: 0.44, blue: 0.14),
-                            Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.7)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    style: StrokeStyle(
-                        lineWidth: 20,
-                        lineCap: .round,
-                        lineJoin: .round
-                    )
-                )
+                .stroke(theme.accent, style: StrokeStyle(lineWidth: 20, lineCap: .round, lineJoin: .round))
                 .rotationEffect(.degrees(-90))
                 .frame(width: 300, height: 300)
                 .animation(.linear(duration: 1), value: timeRemaining)
@@ -165,11 +161,11 @@ struct FocusTimerView: View {
                 VStack(spacing: 8) {
                     Text(formattedTime)
                         .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(theme.text)
                     
                     Text(isTimerRunning ? "Focusing..." : "Tap to set timer")
                         .font(.system(size: 16))
-                        .foregroundColor(.gray)
+                        .foregroundStyle(theme.secondaryText)
                 }
             }
             .disabled(isTimerRunning)
@@ -179,11 +175,13 @@ struct FocusTimerView: View {
 }
 
 struct NotificationInfoView: View {
+    let theme: ThemeColors
+    
     var body: some View {
         Text("While your focus mode is on, all of your notifications will be off")
             .font(.system(size: 16))
             .multilineTextAlignment(.center)
-            .foregroundColor(.gray)
+            .foregroundStyle(theme.secondaryText)
             .padding(.horizontal, 40)
             .padding(.bottom, 20)
     }
@@ -191,12 +189,12 @@ struct NotificationInfoView: View {
 
 struct FocusActionButton: View {
     let isTimerRunning: Bool
+    let theme: ThemeColors
     let onStart: () -> Void
     let onStop: () -> Void
     
     var body: some View {
         Button(action: {
-            print("FocusActionButton tıklandı - Timer durumu: \(isTimerRunning)")
             if isTimerRunning {
                 onStop()
             } else {
@@ -205,21 +203,12 @@ struct FocusActionButton: View {
         }) {
             Text(isTimerRunning ? "Stop Focusing" : "Start Focusing")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(theme.text)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.00, green: 0.44, blue: 0.14),
-                            Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
+                .background(theme.accent)
                 .cornerRadius(12)
-                .shadow(color: Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: theme.accent.opacity(0.3), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 24)
         }
     }
@@ -228,13 +217,14 @@ struct FocusActionButton: View {
 struct FocusOverviewSection: View {
     @Binding var selectedTimeFrame: TimeFrame
     let viewModel: FocusViewModel
+    let theme: ThemeColors
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Overview")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(theme.text)
                 
                 Spacer()
                 
@@ -253,10 +243,10 @@ struct FocusOverviewSection: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12))
                     }
-                    .foregroundColor(.white)
+                    .foregroundStyle(theme.text)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .background(theme.secondaryBackground)
                     .cornerRadius(8)
                 }
             }
@@ -270,19 +260,25 @@ struct FocusOverviewSection: View {
                 FocusSummaryCard(
                     title: "Total Focus Time",
                     value: viewModel.formatDurationHours(totalDuration),
-                    icon: "hourglass"
+                    icon: "hourglass",
+                    theme: theme
                 )
                 
                 FocusSummaryCard(
                     title: "Average Session",
                     value: viewModel.formatDurationHours(averageDuration),
-                    icon: "chart.bar"
+                    icon: "chart.bar",
+                    theme: theme
                 )
             }
             .padding(.horizontal, 24)
             
             // Focus History Graph
-            FocusHistoryGraph(viewModel: viewModel, timeFrame: selectedTimeFrame)
+            FocusHistoryGraph(
+                viewModel: viewModel,
+                timeFrame: selectedTimeFrame,
+                theme: theme
+            )
         }
         .padding(.top, 20)
         .padding(.bottom, 40)
@@ -298,26 +294,27 @@ struct FocusSummaryCard: View {
     let title: String
     let value: String
     let icon: String
+    let theme: ThemeColors
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                    .foregroundStyle(theme.accent)
                 
                 Text(title)
                     .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .foregroundStyle(theme.secondaryText)
             }
             
             Text(value)
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundStyle(theme.text)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+        .background(theme.secondaryBackground)
         .cornerRadius(12)
     }
 }
@@ -325,6 +322,7 @@ struct FocusSummaryCard: View {
 struct FocusHistoryGraph: View {
     let viewModel: FocusViewModel
     let timeFrame: TimeFrame
+    let theme: ThemeColors
     
     var dateRange: [Date] {
         let calendar = Calendar.current
@@ -368,7 +366,8 @@ struct FocusHistoryGraph: View {
                         duration: duration,
                         height: max(height, 20),
                         isToday: Calendar.current.isDateInToday(date),
-                        timeFrame: timeFrame
+                        timeFrame: timeFrame,
+                        theme: theme
                     )
                 }
             }
@@ -384,35 +383,27 @@ struct FocusHistoryBar: View {
     let height: CGFloat
     let isToday: Bool
     let timeFrame: TimeFrame
+    let theme: ThemeColors
     
     var body: some View {
         VStack(spacing: 8) {
             VStack(spacing: 4) {
                 Text(formatDuration(duration))
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(theme.text)
                 
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.00, green: 0.44, blue: 0.14),
-                                Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.7)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .fill(theme.accent)
                     .frame(width: timeFrame == .year ? 60 : 40, height: height)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(theme.text.opacity(0.1), lineWidth: 1)
                     )
             }
             
             Text(formatDate(date))
                 .font(.system(size: 12, weight: isToday ? .bold : .regular))
-                .foregroundColor(isToday ? .white : .gray)
+                .foregroundStyle(isToday ? theme.text : theme.secondaryText)
         }
     }
     
@@ -440,25 +431,27 @@ struct FocusHistoryBar: View {
 struct TimerPickerSheet: View {
     let viewModel: FocusViewModel
     @Binding var isPresented: Bool
+    let theme: ThemeColors
     
     var body: some View {
         ZStack {
-            Color(red: 0.07, green: 0.07, blue: 0.07)
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 Text("Select Duration")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(theme.secondaryText.opacity(0.3))
                     .padding(.vertical, 8)
                 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     ForEach(viewModel.timerOptions, id: \.minutes) { option in
                         TimerOptionButton(
                             option: option,
+                            theme: theme,
                             onSelect: {
                                 viewModel.setTimer(minutes: option.minutes)
                                 isPresented = false
@@ -470,7 +463,7 @@ struct TimerPickerSheet: View {
                 Button("Cancel") {
                     isPresented = false
                 }
-                .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                .foregroundStyle(theme.accent)
                 .padding(.top)
             }
             .padding()
@@ -481,23 +474,22 @@ struct TimerPickerSheet: View {
 
 struct TimerOptionButton: View {
     let option: TimerOption
+    let theme: ThemeColors
     let onSelect: () -> Void
     
     var body: some View {
         Button(action: onSelect) {
             Text(option.title)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(theme.text)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(red: 0.21, green: 0.21, blue: 0.21))
-                )
+                .background(theme.secondaryBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(theme.text.opacity(0.1), lineWidth: 1)
                 )
+                .cornerRadius(12)
         }
     }
 }

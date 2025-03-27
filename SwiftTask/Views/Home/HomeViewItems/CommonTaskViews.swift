@@ -5,34 +5,34 @@ struct InputField: View {
     let title: String
     @Binding var text: String
     let placeholder: String
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14))
-                .foregroundStyle(.gray)
+                .foregroundStyle(themeManager.currentTheme.secondaryText)
             
             TextField("", text: $text, prompt: Text(placeholder)
-                .foregroundStyle(.gray))
-                .foregroundColor(.white)
+                .foregroundStyle(themeManager.currentTheme.secondaryText))
+                .foregroundStyle(themeManager.currentTheme.text)
                 .padding()
-                .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                .background(themeManager.currentTheme.secondaryBackground)
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(themeManager.currentTheme.text.opacity(0.1), lineWidth: 1)
                 )
         }
     }
 }
-
-
 
 // MARK: - Modern Category Button
 struct ModernCategoryButton: View {
     let category: TaskCategory
     let isSelected: Bool
     let action: () -> Void
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Button(action: action) {
@@ -46,10 +46,10 @@ struct ModernCategoryButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 80)
-            .foregroundColor(isSelected ? .white : category.color)
+            .foregroundStyle(isSelected ? themeManager.currentTheme.text : category.color)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? category.color : Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .fill(isSelected ? category.color : themeManager.currentTheme.secondaryBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -64,6 +64,7 @@ struct ModernPriorityButton: View {
     let priority: TaskPriority
     let isSelected: Bool
     let action: () -> Void
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         Button(action: action) {
@@ -77,10 +78,10 @@ struct ModernPriorityButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 64)
-            .foregroundColor(isSelected ? .white : priority.color)
+            .foregroundStyle(isSelected ? themeManager.currentTheme.text : priority.color)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? priority.color : Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .fill(isSelected ? priority.color : themeManager.currentTheme.secondaryBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

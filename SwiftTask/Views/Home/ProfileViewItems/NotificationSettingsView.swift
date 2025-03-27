@@ -4,6 +4,7 @@ import CoreData
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel: NotificationSettingsViewModel
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var showTimePicker = false
     
     init(context: NSManagedObjectContext) {
@@ -16,10 +17,10 @@ struct NotificationSettingsView: View {
             VStack(spacing: 8) {
                 Text("Notifications")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
             
@@ -28,16 +29,16 @@ struct NotificationSettingsView: View {
                     // Main Toggle
                     HStack {
                         Image(systemName: "bell.fill")
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
                         
                         Text("Enable Notifications")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         
                         Spacer()
                         
                         Toggle("", isOn: $viewModel.settings.isEnabled)
-                            .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .tint(themeManager.currentTheme.accent)
                             .onChange(of: viewModel.settings.isEnabled) { oldValue, newValue in
                                 if newValue {
                                     viewModel.requestNotificationPermission()
@@ -45,7 +46,7 @@ struct NotificationSettingsView: View {
                             }
                     }
                     .padding()
-                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .background(themeManager.currentTheme.secondaryBackground)
                     .cornerRadius(12)
                     
                     if viewModel.settings.isEnabled {
@@ -53,58 +54,58 @@ struct NotificationSettingsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Daily Reminder")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeManager.currentTheme.text)
                             
                             Toggle("Enable Daily Reminder", isOn: $viewModel.settings.dailyReminder)
-                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .foregroundStyle(.white)
+                                .tint(themeManager.currentTheme.accent)
+                                .foregroundStyle(themeManager.currentTheme.text)
                             
                             if viewModel.settings.dailyReminder {
                                 Button(action: { showTimePicker = true }) {
                                     HStack {
                                         Text("Reminder Time")
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(themeManager.currentTheme.text)
                                         Spacer()
                                         Text(viewModel.settings.reminderTime, style: .time)
-                                            .foregroundStyle(.gray)
+                                            .foregroundStyle(themeManager.currentTheme.secondaryText)
                                     }
                                 }
                             }
                         }
                         .padding()
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                         
                         // Task Due Reminder
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Task Reminders")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeManager.currentTheme.text)
                             
                             Toggle("Task Due Reminders", isOn: $viewModel.settings.taskDueReminder)
-                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .foregroundStyle(.white)
+                                .tint(themeManager.currentTheme.accent)
+                                .foregroundStyle(themeManager.currentTheme.text)
                         }
                         .padding()
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                         
                         // Sound and Vibration
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Sound & Haptics")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeManager.currentTheme.text)
                             
                             Toggle("Sound", isOn: $viewModel.settings.soundEnabled)
-                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .foregroundStyle(.white)
+                                .tint(themeManager.currentTheme.accent)
+                                .foregroundStyle(themeManager.currentTheme.text)
                             
                             Toggle("Vibration", isOn: $viewModel.settings.vibrationEnabled)
-                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
-                                .foregroundStyle(.white)
+                                .tint(themeManager.currentTheme.accent)
+                                .foregroundStyle(themeManager.currentTheme.text)
                         }
                         .padding()
-                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .background(themeManager.currentTheme.secondaryBackground)
                         .cornerRadius(12)
                     }
                 }
@@ -114,15 +115,15 @@ struct NotificationSettingsView: View {
             Button(action: { dismiss() }) {
                 Text("Close")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .background(themeManager.currentTheme.secondaryBackground)
                     .cornerRadius(12)
             }
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .sheet(isPresented: $showTimePicker) {
             NavigationView {
                 DatePicker("Select Time", selection: $viewModel.settings.reminderTime, displayedComponents: .hourAndMinute)

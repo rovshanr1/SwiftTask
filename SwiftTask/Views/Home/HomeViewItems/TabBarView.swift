@@ -8,6 +8,7 @@ import SwiftUI
 
 struct TabBarView: View {
     @StateObject private var viewModel = TabBarViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
     @Binding var navigateToHome: Bool
     @Binding var navigateToProfile: Bool
     @Binding var navigateToCalendar: Bool
@@ -26,10 +27,10 @@ struct TabBarView: View {
                 rightTabs
             }
             .frame(height: TabBarViewModel.Constants.tabBarHeight)
-            .background(viewModel.tabBarBackground)
+            .background(themeManager.currentTheme.secondaryBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .padding(.horizontal, 16)
-            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+            .shadow(color: themeManager.currentTheme.text.opacity(0.1), radius: 10, x: 0, y: 5)
             
             // Add Button
             addButton
@@ -107,13 +108,13 @@ struct TabBarView: View {
         Button(action: onAddTask) {
             Circle()
                 .frame(width: TabBarViewModel.Constants.addButtonSize, height: TabBarViewModel.Constants.addButtonSize)
-                .foregroundColor(viewModel.addButtonColor)
+                .foregroundStyle(themeManager.currentTheme.accent)
                 .overlay(
                     Image(systemName: "plus")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(themeManager.currentTheme.text)
                 )
-                .shadow(color: viewModel.addButtonColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                .shadow(color: themeManager.currentTheme.accent.opacity(0.4), radius: 8, x: 0, y: 4)
         }
         .offset(y: -30)
         .accessibilityLabel("Add New Task")

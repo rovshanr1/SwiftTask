@@ -10,62 +10,73 @@ import SwiftUI
 import CoreData
 
 struct CalendarHelper {
-    static func weekDay(_ date: Date) -> String {
+    static let shared = CalendarHelper()
+    private let weekDayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
-        return formatter.string(from: date)
-    }
+        return formatter
+    }()
     
-    static func dayNumber(_ date: Date) -> String {
+    private let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
-        return formatter.string(from: date)
-    }
+        return formatter
+    }()
     
-    static func formattedDate(_ date: Date) -> String {
+    private let fullDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMMM, yyyy"
-        return formatter.string(from: date)
+        return formatter
+    }()
+    
+    func weekDay(_ date: Date) -> String {
+        weekDayFormatter.string(from: date)
+    }
+    
+    func dayNumber(_ date: Date) -> String {
+        dayFormatter.string(from: date)
+    }
+    
+    func formattedDate(_ date: Date) -> String {
+        fullDateFormatter.string(from: date)
     }
 }
 
-class CalendarViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDelegate {
-    @Published var selectedDate = Date()
-    @Published var tasks: [Item] = []
-    @Published var selectedCategory: TaskCategory = .all
+@MainActor
+class CalendarViewModel: NSObject, ObservableObject {
+    @Published private(set) var selectedDate = Date()
+    @Published private(set) var tasks: [Item] = []
+    @Published var selectedCategory: TaskCategory = .all {
+        didSet {
+            updateFilteredTasks()
+        }
+    }
+    
     private let context: NSManagedObjectContext
-    private var cachedTasks: [Date: [Item]] = [:]
+    private var cachedTasks: [String: [Item]] = [:]
+    private var filteredTasks: [String: [Item]] = [:]
     private let calendar = Calendar.current
     private let isTestEnvironment: Bool
+    private var daysInWeek: [Date] = []
+    private var taskCountCache: [String: (total: Int, completed: Int)] = [:]
     
-    lazy var fetchedResultsController: NSFetchedResultsController<Item> = {
-        let fetchRequest = NSFetchRequest<Item>(entityName: "Item")
-        
-        if !isTestEnvironment {
-            // Sadece production ortamında tarih filtresi uygula
-            let startDate = calendar.date(byAdding: .day, value: -3, to: calendar.startOfDay(for: Date()))!
-            let endDate = calendar.date(byAdding: .day, value: 3, to: calendar.startOfDay(for: Date()))!
-            fetchRequest.predicate = NSPredicate(format: "date >= %@ AND date <= %@", startDate as NSDate, endDate as NSDate)
-        }
-        
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
-
-        let controller = NSFetchedResultsController(
-            fetchRequest: fetchRequest,
-            managedObjectContext: context,
-            sectionNameKeyPath: nil,
-            cacheName: isTestEnvironment ? nil : "CalendarCache"
-        )
-        
-        controller.delegate = self
-        return controller
+    private lazy var fetchRequest: NSFetchRequest<Item> = {
+        let request = NSFetchRequest<Item>(entityName: "Item")
+        let startDate = calendar.date(byAdding: .day, value: -3, to: calendar.startOfDay(for: Date()))!
+        let endDate = calendar.date(byAdding: .day, value: 3, to: calendar.startOfDay(for: Date()))!
+        request.predicate = NSPredicate(format: "date >= %@ AND date <= %@", startDate as NSDate, endDate as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
+        return request
     }()
     
     init(context: NSManagedObjectContext, isTestEnvironment: Bool = false) {
         self.context = context
         self.isTestEnvironment = isTestEnvironment
         super.init()
-        fetchTasks()
+        
+        Task { @MainActor in
+            await setupInitialData()
+        }
         
         NotificationCenter.default.addObserver(
             self,
@@ -77,117 +88,133 @@ class CalendarViewModel: NSObject, ObservableObject, NSFetchedResultsControllerD
     
     deinit {
         NotificationCenter.default.removeObserver(self)
-        if !isTestEnvironment {
-            NSFetchedResultsController<Item>.deleteCache(withName: "CalendarCache")
-        }
     }
     
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        DispatchQueue.main.async {
-            self.tasks = controller.fetchedObjects as? [Item] ?? []
-            self.cachedTasks.removeAll()
-            self.objectWillChange.send()
-        }
+    private func setupInitialData() async {
+        daysInWeek = calculateDaysInWeek()
+        await fetchTasks()
     }
     
     @objc private func tasksUpdated() {
-        DispatchQueue.main.async {
-            self.fetchTasks()
+        Task { @MainActor in
+            await fetchTasks()
         }
     }
-
-    func fetchTasks() {
+    
+    private func fetchTasks() async {
         do {
-            try fetchedResultsController.performFetch()
-            DispatchQueue.main.async {
-                self.tasks = self.fetchedResultsController.fetchedObjects ?? []
-                self.cachedTasks.removeAll()
-            }
+            let fetchedTasks = try context.fetch(fetchRequest)
+            tasks = fetchedTasks
+            updateCaches()
         } catch {
             print("Error fetching tasks: \(error)")
         }
     }
     
-    func tasksForDate(_ date: Date) -> [Item] {
+    private func updateCaches() {
+        cachedTasks.removeAll()
+        filteredTasks.removeAll()
+        taskCountCache.removeAll()
+        
+        // Günlük görevleri önbelleğe al
+        for date in daysInWeek {
+            let dateKey = dateToString(date)
+            let tasksForDate = getTasksForDate(date)
+            cachedTasks[dateKey] = tasksForDate
+            updateFilteredTasksForDate(date, tasks: tasksForDate)
+            updateTaskCountForDate(date, tasks: tasksForDate)
+        }
+    }
+    
+    private func updateFilteredTasks() {
+        for date in daysInWeek {
+            if let tasks = cachedTasks[dateToString(date)] {
+                updateFilteredTasksForDate(date, tasks: tasks)
+            }
+        }
+        objectWillChange.send()
+    }
+    
+    private func updateFilteredTasksForDate(_ date: Date, tasks: [Item]) {
+        let dateKey = dateToString(date)
+        if selectedCategory == .all {
+            filteredTasks[dateKey] = tasks
+        } else {
+            filteredTasks[dateKey] = tasks.filter { $0.category == selectedCategory.rawValue }
+        }
+        updateTaskCountForDate(date, tasks: filteredTasks[dateKey] ?? [])
+    }
+    
+    private func updateTaskCountForDate(_ date: Date, tasks: [Item]) {
+        let dateKey = dateToString(date)
+        let completedCount = tasks.filter { $0.completed }.count
+        taskCountCache[dateKey] = (total: tasks.count, completed: completedCount)
+    }
+    
+    private func getTasksForDate(_ date: Date) -> [Item] {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        // Önbellekten kontrol et
-        if let cachedTasks = cachedTasks[startOfDay] {
-            return filterTasksByCategory(cachedTasks)
-        }
-        
-        // Önbellekte yoksa hesapla ve önbelleğe al
-        let filteredTasks = tasks.filter { task in
+        return tasks.filter { task in
             guard let taskDate = task.date else { return false }
             return taskDate >= startOfDay && taskDate < endOfDay
         }
-        
-        cachedTasks[startOfDay] = filteredTasks
-        return filterTasksByCategory(filteredTasks)
     }
     
-    private func filterTasksByCategory(_ tasks: [Item]) -> [Item] {
-        guard selectedCategory != .all else { return tasks }
-        return tasks.filter { $0.category == selectedCategory.rawValue }
+    func tasksForDate(_ date: Date) -> [Item] {
+        let dateKey = dateToString(date)
+        return filteredTasks[dateKey] ?? []
     }
     
     func hasCompletedTasks(for date: Date) -> Bool {
-        let startOfDay = calendar.startOfDay(for: date)
-        let tasksForDay = tasksForDate(startOfDay)
-        return !tasksForDay.isEmpty && tasksForDay.contains { $0.completed }
+        let dateKey = dateToString(date)
+        return taskCountCache[dateKey]?.completed ?? 0 > 0
     }
     
     func totalTasks(for date: Date) -> Int {
-        let startOfDay = calendar.startOfDay(for: date)
-        return tasksForDate(startOfDay).count
+        let dateKey = dateToString(date)
+        return taskCountCache[dateKey]?.total ?? 0
     }
     
     func toggleTaskCompletion(_ task: Item) {
         task.completed.toggle()
-        saveContext()
-        NotificationCenter.default.post(name: .tasksUpdated, object: nil)
-    }
-    
-    private func saveContext() {
+        
         do {
             try context.save()
-            self.fetchTasks() // Context kaydedildikten sonra görevleri yeniden yükle
+            updateCaches()
+            NotificationCenter.default.post(name: .tasksUpdated, object: nil)
         } catch {
             print("Error saving context: \(error)")
+            task.completed.toggle() // Hata durumunda geri al
         }
+    }
+    
+    func setSelectedDate(_ date: Date) {
+        selectedDate = date
     }
     
     func formattedDate(_ date: Date) -> String {
-        CalendarHelper.formattedDate(date)
+        CalendarHelper.shared.formattedDate(date)
     }
     
-    func weekDay(_ date: Date) -> String {
-        CalendarHelper.weekDay(date)
-    }
-    
-    func dayNumber(_ date: Date) -> String {
-        CalendarHelper.dayNumber(date)
+    private func calculateDaysInWeek() -> [Date] {
+        let today = calendar.startOfDay(for: Date())
+        guard let startDate = calendar.date(byAdding: .day, value: -3, to: today) else {
+            return []
+        }
+        
+        return (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: startDate)
+        }
     }
     
     func getDaysInWeek() -> [Date] {
-        let today = calendar.startOfDay(for: Date())
-        var days: [Date] = []
-        
-        // Bugünden 3 gün öncesinden başla
-        if let startDate = calendar.date(byAdding: .day, value: -3, to: today) {
-            var currentDate = startDate
-            
-            // 7 gün ekle
-            for _ in 0..<7 {
-                days.append(calendar.startOfDay(for: currentDate))
-                if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-                    currentDate = nextDate
-                }
-            }
-        }
-        
-        return days
+        daysInWeek
+    }
+    
+    private func dateToString(_ date: Date) -> String {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        return "\(components.year ?? 0)-\(components.month ?? 0)-\(components.day ?? 0)"
     }
 }
 

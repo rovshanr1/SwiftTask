@@ -20,7 +20,7 @@ enum TaskCategory: String, CaseIterable {
     
     var color: Color {
         switch self {
-        case .all: return .purple
+        case .all: return ThemeManager.shared.currentTheme.accent
         case .grocery: return Color(red: 0.95, green: 0.33, blue: 0.33)
         case .work: return Color(red: 0.97, green: 0.58, blue: 0.02)
         case .sport: return Color(red: 0.06, green: 0.71, blue: 0.35)
@@ -31,9 +31,9 @@ enum TaskCategory: String, CaseIterable {
         case .health: return Color(red: 0.0, green: 0.73, blue: 0.45)
         case .movie: return Color(red: 0.85, green: 0.0, blue: 0.0)
         case .home: return Color(red: 0.0, green: 0.47, blue: 0.99)
-        case .personal: return .green
-        case .shopping: return .orange
-        case .others: return .gray
+        case .personal: return ThemeManager.shared.currentTheme.accent
+        case .shopping: return ThemeManager.shared.currentTheme.accent
+        case .others: return ThemeManager.shared.currentTheme.secondaryText
         }
     }
     
@@ -67,16 +67,14 @@ enum TaskPriority: Int, CaseIterable {
         case .low: return "Low"
         case .medium: return "Medium"
         case .high: return "High"
-       
         }
     }
     
     var color: Color {
         switch self {
         case .low: return Color(red: 0.06, green: 0.71, blue: 0.35)
-        case .medium: return Color(red: 0.97, green: 0.58, blue: 0.02)
+        case .medium: return ThemeManager.shared.currentTheme.accent
         case .high: return Color(red: 0.95, green: 0.33, blue: 0.33)
-        
         }
     }
 }

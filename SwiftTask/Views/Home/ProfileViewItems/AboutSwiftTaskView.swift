@@ -2,8 +2,9 @@ import SwiftUI
 
 struct AboutSwiftTaskView: View {
     @Environment(\.dismiss) var dismiss
+    @StateObject private var themeManager = ThemeManager.shared
     
-    private let appVersion = "1.0.0"
+    private let appVersion = "1.1.0"
     private let features = [
         ("Task Management", "list.bullet.clipboard.fill", "Create, edit, and organize your daily tasks efficiently"),
         ("Focus Timer", "timer.circle.fill", "Stay productive with built-in Pomodoro timer"),
@@ -17,10 +18,10 @@ struct AboutSwiftTaskView: View {
             VStack(spacing: 8) {
                 Text("About SwiftTask")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                 
                 Divider()
-                    .background(Color.gray.opacity(0.3))
+                    .background(themeManager.currentTheme.secondaryText.opacity(0.3))
                     .padding(.horizontal, -24)
             }
             
@@ -31,35 +32,35 @@ struct AboutSwiftTaskView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .resizable()
                             .frame(width: 80, height: 80)
-                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .foregroundStyle(themeManager.currentTheme.accent)
                         
                         Text("Version \(appVersion)")
                             .font(.system(size: 14))
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(themeManager.currentTheme.secondaryText)
                     }
                     
                     // Features
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Features")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         
                         VStack(spacing: 16) {
                             ForEach(features, id: \.0) { feature in
                                 HStack(spacing: 16) {
                                     Image(systemName: feature.1)
                                         .font(.system(size: 24))
-                                        .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                        .foregroundStyle(themeManager.currentTheme.accent)
                                         .frame(width: 32)
                                     
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(feature.0)
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(themeManager.currentTheme.text)
                                         
                                         Text(feature.2)
                                             .font(.system(size: 14))
-                                            .foregroundStyle(.gray)
+                                            .foregroundStyle(themeManager.currentTheme.secondaryText)
                                             .lineLimit(2)
                                     }
                                 }
@@ -71,22 +72,22 @@ struct AboutSwiftTaskView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Developer")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         
                         HStack(spacing: 16) {
                             Image(systemName: "person.circle.fill")
                                 .font(.system(size: 24))
-                                .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .foregroundStyle(themeManager.currentTheme.accent)
                                 .frame(width: 32)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Rovshan Rasulov")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(themeManager.currentTheme.text)
                                 
                                 Text("iOS Developer")
                                     .font(.system(size: 14))
-                                    .foregroundStyle(.gray)
+                                    .foregroundStyle(themeManager.currentTheme.secondaryText)
                             }
                         }
                     }
@@ -95,19 +96,21 @@ struct AboutSwiftTaskView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Contact")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeManager.currentTheme.text)
                         
                         VStack(spacing: 16) {
                             LinkButton(
                                 icon: "envelope.fill",
                                 title: "Email",
-                                subtitle: "support@swifttask.com"
+                                subtitle: "support@swifttask.com",
+                                theme: themeManager.currentTheme
                             )
                             
                             LinkButton(
                                 icon: "globe",
                                 title: "Website",
-                                subtitle: "www.swifttask.com"
+                                subtitle: "www.swifttask.com",
+                                theme: themeManager.currentTheme
                             )
                         }
                     }
@@ -119,15 +122,15 @@ struct AboutSwiftTaskView: View {
             Button(action: { dismiss() }) {
                 Text("Close")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(themeManager.currentTheme.text)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .background(themeManager.currentTheme.secondaryBackground)
                     .cornerRadius(12)
             }
         }
         .padding(24)
-        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .background(themeManager.currentTheme.background)
         .presentationDetents([.large])
     }
 }
@@ -136,31 +139,32 @@ struct LinkButton: View {
     let icon: String
     let title: String
     let subtitle: String
+    let theme: ThemeColors
     
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 24))
-                .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                .foregroundStyle(theme.accent)
                 .frame(width: 32)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.text)
                 
                 Text(subtitle)
                     .font(.system(size: 14))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(theme.secondaryText)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.text)
         }
         .padding(16)
-        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+        .background(theme.secondaryBackground)
         .cornerRadius(12)
     }
 } 
