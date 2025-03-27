@@ -16,6 +16,7 @@ struct ProfileView: View {
     @State private var newUserName = ""
     @State private var isLoggedOut = false
     @State private var deleteAccountPassword = ""
+    @State private var showNotificationSettings = false
 
     var body: some View {
         NavigationStack {
@@ -164,9 +165,7 @@ struct ProfileView: View {
         List {
             Section(header: Text("App Settings").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
                 // Notifications
-                Button(action: {
-                    // TODO: Implement notifications settings
-                }) {
+                Button(action: { showNotificationSettings = true }) {
                     HStack {
                         Image(systemName: "bell.fill")
                             .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
@@ -177,6 +176,10 @@ struct ProfileView: View {
                         Image(systemName: "chevron.right")
                             .foregroundStyle(.white)
                     }
+                }
+                .sheet(isPresented: $showNotificationSettings) {
+                    NotificationSettingsView(context: PersistenceController.shared.viewContext)
+                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
                 }
                 
                 // App Theme

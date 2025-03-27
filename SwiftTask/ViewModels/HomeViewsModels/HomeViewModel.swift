@@ -102,6 +102,7 @@ class HomeViewModel: ObservableObject {
     
     private let context: NSManagedObjectContext
     private let taskService = TaskService.shared
+    private let notificationService = NotificationService.shared
     
     var filteredItems: [Item] {
         if searchText.isEmpty {
@@ -143,6 +144,21 @@ class HomeViewModel: ObservableObject {
             self,
             selector: #selector(profileUpdated),
             name: .tasksUpdated,
+            object: nil
+        )
+        
+        // Notification observers for reminders
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDailyReminderTapped),
+            name: .dailyReminderTapped,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleTaskReminderTapped(_:)),
+            name: .taskReminderTapped,
             object: nil
         )
     }
@@ -254,6 +270,13 @@ class HomeViewModel: ObservableObject {
                     priority: priority,
                     context: context
                 )
+                
+                // Schedule notification for new task
+                let settings = NotificationSettingsModel.loadFromUserDefaults()
+                if settings.taskDueReminder, let lastTask = try? context.fetch(Item.fetchRequest()).last {
+                    try await notificationService.scheduleTaskReminder(for: lastTask, context: context)
+                }
+                
                 isLoading = false
                 fetchItems()
             } catch {
@@ -267,6 +290,12 @@ class HomeViewModel: ObservableObject {
         Task {
             do {
                 isLoading = true
+                
+                // Cancel notification first
+                if let taskId = item.id?.uuidString {
+                    notificationService.cancelTaskReminder(for: taskId)
+                }
+                
                 try await taskService.deleteTask(item: item, context: context)
                 isLoading = false
                 fetchItems()
@@ -289,6 +318,16 @@ class HomeViewModel: ObservableObject {
                     priority: priority,
                     context: context
                 )
+                
+                // Update task notification
+                let settings = NotificationSettingsModel.loadFromUserDefaults()
+                if settings.taskDueReminder {
+                    if let taskId = item.id?.uuidString {
+                        notificationService.cancelTaskReminder(for: taskId)
+                    }
+                    try await notificationService.scheduleTaskReminder(for: item, context: context)
+                }
+                
                 isLoading = false
                 fetchItems()
             } catch {
@@ -304,6 +343,12 @@ class HomeViewModel: ObservableObject {
                 print("Toggling task completion - Before: \(item.completed)")
                 isLoading = true
                 try await taskService.toggleTaskCompletion(item: item, context: context)
+                
+                // Cancel notification if task is completed
+                if item.completed, let taskId = item.id?.uuidString {
+                    notificationService.cancelTaskReminder(for: taskId)
+                }
+                
                 await MainActor.run {
                     isLoading = false
                     fetchItems()
@@ -323,12 +368,42 @@ class HomeViewModel: ObservableObject {
         errorMessage = nil
         showError = false
     }
+    
+    // MARK: - Notification Handlers
+    @objc private func handleDailyReminderTapped() {
+        // Actions to perform when daily reminder is tapped
+        fetchItems() // Refresh tasks
+    }
+    
+    @objc private func handleTaskReminderTapped(_ notification: Notification) {
+        guard let taskId = notification.userInfo?["taskId"] as? String else { return }
+        
+        // Actions to perform when task reminder is tapped
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", taskId)
+        request.fetchLimit = 1
+        
+        do {
+            if let task = try context.fetch(request).first {
+                // Mark or display the relevant task
+                print("Task reminder tapped for: \(task.title ?? "")")
+                // Additional actions can be performed here to highlight or display the task
+            }
+        } catch {
+            print("Error fetching task: \(error)")
+        }
+    }
 }
 
 extension Notification.Name {
+    // In-app notifications
     static let tasksUpdated = Notification.Name("tasksUpdated")
     static let profileUpdated = Notification.Name("profileUpdated")
     static let userSignedOut = Notification.Name("userSignedOut")
+    
+    // User notifications
+    static let dailyReminderTapped = Notification.Name("dailyReminderTapped")
+    static let taskReminderTapped = Notification.Name("taskReminderTapped")
 }
 
 

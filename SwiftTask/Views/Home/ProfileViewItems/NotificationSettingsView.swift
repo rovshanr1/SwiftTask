@@ -1,0 +1,143 @@
+import SwiftUI
+import CoreData
+
+struct NotificationSettingsView: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel: NotificationSettingsViewModel
+    @State private var showTimePicker = false
+    
+    init(context: NSManagedObjectContext) {
+        _viewModel = StateObject(wrappedValue: NotificationSettingsViewModel(context: context))
+    }
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            // Header
+            VStack(spacing: 8) {
+                Text("Notifications")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, -24)
+            }
+            
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    // Main Toggle
+                    HStack {
+                        Image(systemName: "bell.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 24, height: 24)
+                        
+                        Text("Enable Notifications")
+                            .foregroundStyle(.white)
+                        
+                        Spacer()
+                        
+                        Toggle("", isOn: $viewModel.settings.isEnabled)
+                            .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .onChange(of: viewModel.settings.isEnabled) { oldValue, newValue in
+                                if newValue {
+                                    viewModel.requestNotificationPermission()
+                                }
+                            }
+                    }
+                    .padding()
+                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .cornerRadius(12)
+                    
+                    if viewModel.settings.isEnabled {
+                        // Daily Reminder Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Daily Reminder")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
+                            
+                            Toggle("Enable Daily Reminder", isOn: $viewModel.settings.dailyReminder)
+                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .foregroundStyle(.white)
+                            
+                            if viewModel.settings.dailyReminder {
+                                Button(action: { showTimePicker = true }) {
+                                    HStack {
+                                        Text("Reminder Time")
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        Text(viewModel.settings.reminderTime, style: .time)
+                                            .foregroundStyle(.gray)
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .cornerRadius(12)
+                        
+                        // Task Due Reminder
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Task Reminders")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
+                            
+                            Toggle("Task Due Reminders", isOn: $viewModel.settings.taskDueReminder)
+                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .foregroundStyle(.white)
+                        }
+                        .padding()
+                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .cornerRadius(12)
+                        
+                        // Sound and Vibration
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Sound & Haptics")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
+                            
+                            Toggle("Sound", isOn: $viewModel.settings.soundEnabled)
+                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .foregroundStyle(.white)
+                            
+                            Toggle("Vibration", isOn: $viewModel.settings.vibrationEnabled)
+                                .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                .foregroundStyle(.white)
+                        }
+                        .padding()
+                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .cornerRadius(12)
+                    }
+                }
+            }
+            
+            // Close Button
+            Button(action: { dismiss() }) {
+                Text("Close")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                    .cornerRadius(12)
+            }
+        }
+        .padding(24)
+        .background(Color(red: 0.07, green: 0.07, blue: 0.07))
+        .sheet(isPresented: $showTimePicker) {
+            NavigationView {
+                DatePicker("Select Time", selection: $viewModel.settings.reminderTime, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .navigationBarItems(
+                        trailing: Button("Done") {
+                            showTimePicker = false
+                            viewModel.updateReminderTime(viewModel.settings.reminderTime)
+                        }
+                    )
+            }
+            .presentationDetents([.height(300)])
+        }
+        .onAppear {
+            viewModel.checkNotificationStatus()
+        }
+    }
+} 
