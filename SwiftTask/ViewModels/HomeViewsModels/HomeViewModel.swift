@@ -205,12 +205,29 @@ class HomeViewModel: ObservableObject {
     }
     
     private func updateTaskCounts() {
-        let today = Calendar.current.startOfDay(for: Date())
-        let todayTasks = items.filter { Calendar.current.startOfDay(for: $0.date ?? Date()) == today }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        _ = calendar.date(byAdding: .day, value: 1, to: today)!
         
+        // Bugünün görevlerini filtrele
+        let todayTasks = items.filter { item in
+            if let taskDate = item.date {
+                let taskDay = calendar.startOfDay(for: taskDate)
+                return taskDay == today
+            }
+            return false
+        }
+        
+        // Tamamlanan ve kalan görevleri say
         taskDoneCount = todayTasks.filter { $0.completed }.count
         taskLeftCount = todayTasks.filter { !$0.completed }.count
         
+        // UI'ı güncelle
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+        
+        // Diğer görünümleri bilgilendir
         NotificationCenter.default.post(
             name: .tasksUpdated,
             object: nil,
@@ -279,6 +296,7 @@ class HomeViewModel: ObservableObject {
                 
                 isLoading = false
                 fetchItems()
+                updateTaskCounts()
             } catch {
                 isLoading = false
                 handleError(error)
@@ -299,6 +317,7 @@ class HomeViewModel: ObservableObject {
                 try await taskService.deleteTask(item: item, context: context)
                 isLoading = false
                 fetchItems()
+                updateTaskCounts()
             } catch {
                 isLoading = false
                 handleError(error)
@@ -352,6 +371,7 @@ class HomeViewModel: ObservableObject {
                 await MainActor.run {
                     isLoading = false
                     fetchItems()
+                    updateTaskCounts()
                     print("Task completion toggled - After: \(item.completed)")
                 }
             } catch {

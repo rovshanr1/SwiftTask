@@ -3,7 +3,13 @@ import SwiftUI
 struct LoginView: View {
     @StateObject  var viewModel = LoginViewModel()
     @Binding var showLoginScreen: Bool
-    @FocusState private var isKeyboardActive: Bool
+    @FocusState private var focusedField: Field?
+    
+    private enum Field {
+        case email
+        case password
+    }
+    
     @State private var navigationToHome = false
     @State private var navigateToResetPassword = false
     
@@ -28,40 +34,57 @@ struct LoginView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         
                         VStack(alignment: .leading, spacing: 10) {
-                            // Username
+                            // Email
                             Text("Email")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
                             TextField("Enter your email", text: $viewModel.email)
                                 .keyboardType(.emailAddress)
+                                .textContentType(.emailAddress)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .submitLabel(.next)
+                                .onSubmit {
+                                    focusedField = .password
+                                }
                                 .padding()
-                                .autocapitalization(.none)
                                 .foregroundStyle(.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray, lineWidth: 2)
-                                )
-                                .focused($isKeyboardActive) // Track keyboard status
+                                .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                                .cornerRadius(12)
+                                .focused($focusedField, equals: .email)
                             
                             // Password
                             Text("Password")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white)
-                            SecureField("Enter your Password", text: $viewModel.password)
+                            SecureField("Enter your password", text: $viewModel.password)
+                                .textContentType(.password)
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    focusedField = nil
+                                    if !viewModel.email.isEmpty && !viewModel.password.isEmpty {
+                                        viewModel.login { success in
+                                            if success {
+                                                navigationToHome = true
+                                            }
+                                        }
+                                    }
+                                }
                                 .padding()
                                 .foregroundStyle(.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray, lineWidth: 2)
-                                )
-                                .focused($isKeyboardActive)
+                                .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                                .cornerRadius(12)
+                                .focused($focusedField, equals: .password)
                             
                             if let errorMessage = viewModel.error {
                                 Text(errorMessage)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(viewModel.isSuccess ? .green : .red)
                                     .font(.system(size: 14))
                                     .padding(.top, 5)
                                     .frame(maxWidth: .infinity, alignment: .center)
+                                    .multilineTextAlignment(.center)
+                                    .transition(.opacity)
+                                    .animation(.easeInOut, value: errorMessage)
                             }
                         }
                         

@@ -202,6 +202,12 @@ struct StartScreenView: View {
                             .stroke(Color.customAccent, lineWidth: 2)
                     )
             }
+            
+            // Developer credit text
+            Text("Developed by Rovshan Rasulov")
+                .font(.system(size: 12))
+                .foregroundColor(.gray.opacity(0.7))
+                .padding(.top, 8)
         }
     }
 }

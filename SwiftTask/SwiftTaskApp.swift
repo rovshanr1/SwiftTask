@@ -7,15 +7,71 @@
 
 import SwiftUI
 import FirebaseCore
+import UserNotifications
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
         
         // Auth durumunu uygulama başlarken kontrol et
         AuthService.shared.checkAndResetAuthState()
+        
+        // Notification delegate'i ayarla
+        UNUserNotificationCenter.current().delegate = self
+        
+        // Bildirim izinlerini iste
+        requestNotificationPermissions()
+        
         return true
+    }
+    
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            if granted {
+                print("Notification permission granted")
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            } else if let error = error {
+                print("Notification permission error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Bildirim geldiğinde uygulama açıkken göster
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        // Bildirimi banner, ses ve rozet olarak göster
+        completionHandler([.banner, .sound, .badge])
+    }
+    
+    // Bildirime tıklandığında işle
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        
+        // Bildirim tipine göre işlem yap
+        if response.notification.request.identifier == "dailyReminder" {
+            NotificationCenter.default.post(name: .dailyReminderTapped, object: nil)
+        } else {
+            // Görev bildirimi için taskId'yi gönder
+            if let taskId = userInfo["taskId"] as? String {
+                NotificationCenter.default.post(
+                    name: .taskReminderTapped,
+                    object: nil,
+                    userInfo: ["taskId": taskId]
+                )
+            }
+        }
+        
+        completionHandler()
     }
 }
 

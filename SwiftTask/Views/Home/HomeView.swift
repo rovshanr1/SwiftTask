@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import UserNotifications
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
@@ -119,8 +120,28 @@ struct HomeView: View {
             }
             Spacer()
             
-            NavigationLink(destination: ProfileView(homeViewModel: viewModel)) {
-                ProfileImageView(imageData: viewModel.profileImageData)
+            HStack(spacing: 16) {
+                Button(action: {
+                    UNUserNotificationCenter.current().getNotificationSettings { settings in
+                        DispatchQueue.main.async {
+                            if settings.authorizationStatus == .denied {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(url)
+                                }
+                            } else {
+                                navigateToProfile = true
+                            }
+                        }
+                    }
+                }) {
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                }
+                
+                NavigationLink(destination: ProfileView(homeViewModel: viewModel)) {
+                    ProfileImageView(imageData: viewModel.profileImageData)
+                }
             }
         }
         .padding(.horizontal)

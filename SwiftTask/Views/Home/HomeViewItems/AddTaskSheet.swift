@@ -1,5 +1,5 @@
 import SwiftUI
-
+import UserNotifications
 
 struct AddTaskSheet: View {
     @Binding var isPresented: Bool
@@ -8,6 +8,8 @@ struct AddTaskSheet: View {
     @Binding var selectedCategory: TaskCategory?
     @Binding var selectedPriority: TaskPriority?
     @State private var showAllCategories = false
+    @State private var enableReminder = false
+    @State private var reminderDate = Date()
     var onSave: () -> Void
     
     private let mainCategories: [TaskCategory] = [.work, .personal, .home]
@@ -104,6 +106,28 @@ struct AddTaskSheet: View {
                         }
                     }
                     .padding(.vertical, 8)
+                    
+                    // Reminder Section
+                    VStack(alignment: .leading, spacing: 16) {
+                        Toggle(isOn: $enableReminder) {
+                            HStack {
+                                Image(systemName: "bell.fill")
+                                    .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                                Text("Set Reminder")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
+                        }
+                        .tint(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        
+                        if enableReminder {
+                            DatePicker("Reminder Time", selection: $reminderDate, displayedComponents: [.date, .hourAndMinute])
+                                .datePickerStyle(.graphical)
+                                .colorScheme(.dark)
+                                .accentColor(Color(red: 1.00, green: 0.44, blue: 0.14))
+                        }
+                    }
+                    .padding(.vertical, 8)
                 }
                 .padding(.top, 8)
             }
@@ -121,6 +145,9 @@ struct AddTaskSheet: View {
                 }
                 
                 Button(action: {
+                    if enableReminder {
+                        checkAndScheduleNotification()
+                    }
                     onSave()
                     isPresented = false
                 }) {
@@ -146,6 +173,24 @@ struct AddTaskSheet: View {
         .padding(24)
         .background(Color(red: 0.07, green: 0.07, blue: 0.07))
         .presentationDetents([.large])
+    }
+    
+    private func checkAndScheduleNotification() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            if settings.authorizationStatus == .authorized {
+                // Bildirim izni varsa, hatırlatıcıyı planla
+                print("Reminder scheduled for: \(reminderDate)")
+            } else {
+                // Bildirim izni yoksa, izin iste
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+                    if granted {
+                        print("Notification permission granted")
+                    } else if let error = error {
+                        print("Notification permission error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
     }
 }
 
