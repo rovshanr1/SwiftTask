@@ -30,13 +30,23 @@ final class TaskService {
             throw TaskServiceError.userNotFound
         }
         
+        print("TaskService - Starting Firebase sync")
+        
         // Listen for real-time updates
         database.child("users").child(userId).child("tasks").observe(.value) { [weak self] snapshot in
             guard let self = self,
-                  let tasksDict = snapshot.value as? [String: [String: Any]] else { return }
+                  let tasksDict = snapshot.value as? [String: [String: Any]] else {
+                print("TaskService - No tasks found or invalid data format")
+                return
+            }
             
             Task { @MainActor in
-                try? await self.updateLocalTasks(with: tasksDict, context: context)
+                do {
+                    try await self.updateLocalTasks(with: tasksDict, context: context)
+                    print("TaskService - Local tasks updated successfully")
+                } catch {
+                    print("TaskService - Error updating local tasks: \(error.localizedDescription)")
+                }
             }
         }
     }
@@ -150,23 +160,42 @@ final class TaskService {
         }
         
         let newCompletionState = !item.completed
-        let taskData: [String: Any] = ["completed": newCompletionState]
+        print("TaskService - Toggling completion state to: \(newCompletionState)")
+        
+        let taskData: [String: Any] = [
+            "completed": newCompletionState,
+            "title": item.title ?? "",
+            "description": item.taskDescription ?? "",
+            "date": item.date?.timeIntervalSince1970 ?? Date().timeIntervalSince1970,
+            "category": item.category ?? "",
+            "priority": Int(item.priority)
+        ]
         
         // Önce CoreData'yı güncelle
         item.completed = newCompletionState
+        
         do {
             try context.save()
+            print("TaskService - CoreData saved successfully")
             
             // Firebase'i güncellemeyi dene
             if offlineSyncManager.isOnline {
                 try await syncToggleComplete(taskId: taskId, taskData: taskData)
+                print("TaskService - Firebase updated successfully")
             } else {
                 // Çevrimdışıysa pending operasyonlara ekle
                 offlineSyncManager.addPendingOperation(
                     .init(type: .toggleComplete, taskId: taskId, taskData: taskData)
                 )
+                print("TaskService - Added to offline sync queue")
             }
+            
+            // Context'i yenile
+            context.refresh(item, mergeChanges: true)
         } catch {
+            print("TaskService - Error: \(error.localizedDescription)")
+            // Hata durumunda değişiklikleri geri al
+            context.rollback()
             throw TaskServiceError.updateFailed
         }
     }
@@ -226,11 +255,17 @@ final class TaskService {
             throw TaskServiceError.userNotFound
         }
         
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            database.child("users").child(userId).child("tasks").child(taskId).updateChildValues(taskData) { error, _ in
+        print("TaskService - Syncing task completion with Firebase")
+        
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let taskRef = database.child("users").child(userId).child("tasks").child(taskId)
+            
+            taskRef.updateChildValues(taskData) { error, _ in
                 if let error = error {
+                    print("TaskService - Firebase sync error: \(error.localizedDescription)")
                     continuation.resume(throwing: TaskServiceError.firebaseError(error))
                 } else {
+                    print("TaskService - Firebase sync completed successfully")
                     continuation.resume()
                 }
             }
@@ -241,6 +276,8 @@ final class TaskService {
     
     @MainActor
     private func updateLocalTasks(with tasksDict: [String: [String: Any]], context: NSManagedObjectContext) async throws {
+        print("TaskService - Starting local tasks update")
+        
         // Fetch existing tasks
         let fetchRequest: NSFetchRequest<Item> = Item.fetchRequest()
         let existingTasks = try context.fetch(fetchRequest)
@@ -259,6 +296,7 @@ final class TaskService {
                 if existingTaskIds.contains(taskId) {
                     // Update existing task
                     if let existingTask = existingTasks.first(where: { $0.id?.uuidString == taskId }) {
+                        print("TaskService - Updating existing task: \(taskId)")
                         existingTask.title = title
                         existingTask.taskDescription = description
                         existingTask.date = date
@@ -270,6 +308,7 @@ final class TaskService {
                     }
                 } else {
                     // Create new task
+                    print("TaskService - Creating new task: \(taskId)")
                     let newTask = Item(context: context)
                     newTask.id = UUID(uuidString: taskId)
                     newTask.title = title
@@ -292,9 +331,16 @@ final class TaskService {
         }
         
         for task in tasksToDelete {
+            print("TaskService - Deleting task: \(task.id?.uuidString ?? "unknown")")
             context.delete(task)
         }
         
-        try context.save()
+        do {
+            try context.save()
+            print("TaskService - All local tasks updated successfully")
+        } catch {
+            print("TaskService - Error saving context: \(error.localizedDescription)")
+            throw TaskServiceError.coreDataError(error)
+        }
     }
 } 

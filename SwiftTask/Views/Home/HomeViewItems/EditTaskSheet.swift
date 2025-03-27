@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 struct EditTaskSheet: View {
     @Binding var isPresented: Bool
     @Binding var title: String
@@ -17,39 +18,40 @@ struct EditTaskSheet: View {
     var onSave: () -> Void
     
     private let mainCategories: [TaskCategory] = [.work, .personal, .home]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Edit Task")
-                .font(.title2)
-                .bold()
-                .foregroundStyle(.white)
+        VStack(spacing: 24) {
+            // Header
+            VStack(spacing: 8) {
+                Text("Edit Task")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+                    .padding(.horizontal, -24)
+            }
             
-            ScrollView {
-                VStack(spacing: 16) {
-                    TextField("Task title", text: $title, prompt: Text("Task Title").foregroundStyle(.gray))
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 58)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color.gray, lineWidth: 2)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    // Input Fields
+                    VStack(spacing: 16) {
+                        InputField(
+                            title: "Task Title",
+                            text: $title,
+                            placeholder: "Enter task title"
                         )
-                    
-                    TextField("Description", text: $description, prompt: Text("Description").foregroundStyle(.gray))
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 58)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color.gray, lineWidth: 2)
+                        
+                        InputField(
+                            title: "Description",
+                            text: $description,
+                            placeholder: "Enter task description"
                         )
+                    }
                     
                     // Categories
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("Category")
                                 .foregroundColor(.white)
@@ -57,7 +59,8 @@ struct EditTaskSheet: View {
                             Spacer()
                             Button(action: { showAllCategories.toggle() }) {
                                 HStack(spacing: 4) {
-                                    Text(showAllCategories ? "Less" : "More")
+                                    Text(showAllCategories ? "Show Less" : "Show More")
+                                        .font(.system(size: 14))
                                         .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
                                     Image(systemName: showAllCategories ? "chevron.up" : "chevron.down")
                                         .foregroundColor(Color(red: 1.00, green: 0.44, blue: 0.14))
@@ -66,28 +69,22 @@ struct EditTaskSheet: View {
                         }
                         
                         if !showAllCategories {
-                       
-                            HStack(spacing: 12) {
+                            LazyVGrid(columns: columns, spacing: 12) {
                                 ForEach(mainCategories, id: \.self) { category in
-                                    CategoryButton(
+                                    ModernCategoryButton(
                                         category: category,
                                         isSelected: selectedCategory == category,
-                                        color: category.color,
-                                        icon: category.icon,
                                         action: { selectedCategory = category }
                                     )
                                 }
                             }
                         } else {
-                         
                             LazyVGrid(columns: columns, spacing: 12) {
                                 ForEach(TaskCategory.allCases, id: \.self) { category in
                                     if category != .all {
-                                        CategoryButton(
+                                        ModernCategoryButton(
                                             category: category,
                                             isSelected: selectedCategory == category,
-                                            color: category.color,
-                                            icon: category.icon,
                                             action: { selectedCategory = category }
                                         )
                                     }
@@ -95,16 +92,17 @@ struct EditTaskSheet: View {
                             }
                         }
                     }
+                    .padding(.vertical, 8)
                     
                     // Priority
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         Text("Priority")
                             .foregroundColor(.white)
                             .font(.headline)
                         
                         HStack(spacing: 12) {
                             ForEach(TaskPriority.allCases, id: \.self) { priority in
-                                PriorityButton(
+                                ModernPriorityButton(
                                     priority: priority,
                                     isSelected: selectedPriority == priority,
                                     action: { selectedPriority = priority }
@@ -112,18 +110,21 @@ struct EditTaskSheet: View {
                             }
                         }
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding()
+                .padding(.top, 8)
             }
             
-            HStack {
-                Button(action: {
-                    isPresented = false
-                }) {
+            // Action Buttons
+            HStack(spacing: 16) {
+                Button(action: { isPresented = false }) {
                     Text("Cancel")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
                         .frame(maxWidth: .infinity)
-                        .frame(height: 48)
+                        .frame(height: 52)
+                        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
+                        .cornerRadius(12)
                 }
                 
                 Button(action: {
@@ -131,20 +132,27 @@ struct EditTaskSheet: View {
                     isPresented = false
                 }) {
                     Text("Save")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color(red: 1.00, green: 0.44, blue: 0.14))
-                        .cornerRadius(5)
+                        .frame(height: 52)
+                        .background(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 1.00, green: 0.44, blue: 0.14),
+                                    Color(red: 1.00, green: 0.44, blue: 0.14).opacity(0.8)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(12)
                 }
-                .padding(.horizontal)
             }
         }
+        .padding(24)
         .background(Color(red: 0.07, green: 0.07, blue: 0.07))
         .presentationDetents([.large])
     }
 }
-
-
-
 

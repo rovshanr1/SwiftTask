@@ -301,10 +301,20 @@ class HomeViewModel: ObservableObject {
     func toggleTaskCompletion(_ item: Item) {
         Task {
             do {
+                print("Toggling task completion - Before: \(item.completed)")
+                isLoading = true
                 try await taskService.toggleTaskCompletion(item: item, context: context)
-                fetchItems()
+                await MainActor.run {
+                    isLoading = false
+                    fetchItems()
+                    print("Task completion toggled - After: \(item.completed)")
+                }
             } catch {
-                handleError(error)
+                await MainActor.run {
+                    isLoading = false
+                    handleError(error)
+                    print("Error toggling task completion: \(error.localizedDescription)")
+                }
             }
         }
     }

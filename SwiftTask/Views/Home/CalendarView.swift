@@ -26,7 +26,11 @@ struct CalendarView: View {
             
             VStack(spacing: 0) {
                 // Header
-                CalendarHeaderView(title: "Calendar")
+                    Text("Profile")
+                        .font(.title)
+                        .foregroundColor(.white)
+                        .padding(.top, 20)
+                        .padding(.bottom, 10)
                 
                 // Category Selector with Gradient Background
                 CategorySelectorView(
@@ -83,19 +87,7 @@ struct CalendarView: View {
 
 // MARK: - Supporting Views
 
-struct CalendarHeaderView: View {
-    let title: String
-    
-    var body: some View {
-        Text(title)
-            .font(.system(size: 28, weight: .bold))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.top, 20)
-            .padding(.bottom, 10)
-    }
-}
+
 
 struct CategorySelectorView: View {
     @Binding var selectedCategory: TaskCategory

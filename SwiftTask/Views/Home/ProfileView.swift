@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var userNameChanged = false
     @State private var showImagePicker = false
     @State private var showChangePasswordView = false
+    @State private var showAboutView = false
     @State private var newUserName = ""
     @State private var isLoggedOut = false
     @State private var deleteAccountPassword = ""
@@ -161,12 +162,84 @@ struct ProfileView: View {
     @ViewBuilder
     private func settingsList() -> some View {
         List {
+            Section(header: Text("App Settings").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
+                // Notifications
+                Button(action: {
+                    // TODO: Implement notifications settings
+                }) {
+                    HStack {
+                        Image(systemName: "bell.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 24, height: 24)
+                        Text("Notifications")
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.white)
+                    }
+                }
+                
+                // App Theme
+                Button(action: {
+                    // TODO: Implement theme settings
+                }) {
+                    HStack {
+                        Image(systemName: "paintbrush.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 24, height: 24)
+                        Text("App Theme")
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.white)
+                    }
+                }
+                
+                // Language
+                Button(action: {
+                    // TODO: Implement language settings
+                }) {
+                    HStack {
+                        Image(systemName: "globe")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 24, height: 24)
+                        Text("Language")
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Text("English")
+                            .foregroundStyle(.gray)
+                            .font(.system(size: 14))
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.white)
+                    }
+                }
+                
+                // About App
+                Button(action: { showAboutView = true }) {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
+                            .frame(width: 24, height: 24)
+                        Text("About SwiftTask")
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.white)
+                    }
+                }
+                .sheet(isPresented: $showAboutView) {
+                    AboutSwiftTaskView()
+                        .presentationBackground(Color(red: 0.12, green: 0.12, blue: 0.12))
+                }
+            }
+            .listRowBackground(Color(red: 0.07, green: 0.07, blue: 0.07))
+
             Section(header: Text("Account").foregroundStyle(Color(red: 0.69, green: 0.69, blue: 0.69))) {
                 // Change account name button
                 Button(action: { showingCustomModal = true }) {
                     HStack {
-                        Image("user")
-                            .foregroundStyle(.white)
+                        Image(systemName: "person.text.rectangle.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .frame(width: 24, height: 24)
                         Text("Change account name")
                             .foregroundStyle(.white)
@@ -183,8 +256,8 @@ struct ProfileView: View {
                 // Change image button
                 Button(action: { showImagePicker = true }) {
                     HStack {
-                        Image("camera")
-                            .foregroundStyle(.white)
+                        Image(systemName: "person.crop.circle.fill.badge.plus")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .frame(width: 24, height: 24)
                         Text("Change account Image")
                             .foregroundStyle(.white)
@@ -201,8 +274,8 @@ struct ProfileView: View {
                 // Change password button
                 Button(action: { showChangePasswordView = true }) {
                     HStack {
-                        Image("key")
-                            .foregroundStyle(.white)
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(Color(red: 1.00, green: 0.44, blue: 0.14))
                             .frame(width: 24, height: 24)
                         Text("Change account password")
                             .foregroundStyle(.white)
@@ -219,7 +292,7 @@ struct ProfileView: View {
                 // Delete Account Button
                 Button(action: { viewModel.isShowingDeleteAccountAlert = true }) {
                     HStack {
-                        Image(systemName: "person.crop.circle.badge.minus")
+                        Image(systemName: "person.crop.circle.badge.xmark.fill")
                             .foregroundStyle(.red)
                             .frame(width: 24, height: 24)
                         Text("Delete Account")

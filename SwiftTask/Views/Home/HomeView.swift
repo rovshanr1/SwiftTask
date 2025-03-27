@@ -397,11 +397,17 @@ struct TaskRow: View {
                 }
                 
                 Button(action: {
-                    onComplete(item)
+                    print("Task completion toggled - Current state: \(item.completed)")
+                    withAnimation(.spring()) {
+                        onComplete(item)
+                    }
                 }) {
                     Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(.white)
+                        .foregroundColor(item.completed ? .green : .white)
+                        .font(.system(size: 24))
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(PlainButtonStyle())
             }
             
             if isDescriptionVisible, let description = item.taskDescription, !description.isEmpty {
@@ -412,7 +418,7 @@ struct TaskRow: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.2))
+        .background(Color(red: 0.21, green: 0.21, blue: 0.21))
         .cornerRadius(10)
         .padding(.horizontal)
         .onTapGesture {
@@ -424,6 +430,8 @@ struct TaskRow: View {
             Button(action: {
                 editedTitle = item.title ?? ""
                 editedDescription = item.taskDescription ?? ""
+                selectedCategory = taskCategory
+                selectedPriority = taskPriority
                 isEditing = true
             }) {
                 Label("Edit", systemImage: "pencil")
@@ -431,10 +439,6 @@ struct TaskRow: View {
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
             }
-        }
-        .onAppear {
-            selectedCategory = taskCategory
-            selectedPriority = taskPriority
         }
         .sheet(isPresented: $isEditing) {
             ZStack {

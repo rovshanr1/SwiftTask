@@ -107,35 +107,41 @@ struct StartScreenView: View {
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
+            let screenHeight = geometry.size.height
+            let screenWidth = geometry.size.width
+            let isSmallDevice = screenHeight < 700
+            
             ZStack {
                 Color.customBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 40) {
-                    // Logo and Welcome Section
-                    VStack(spacing: 25) {
+                VStack(spacing: 0) {
+                    // Logo Section
+                    VStack(spacing: isSmallDevice ? 16 : 25) {
+                        Spacer()
+                            .frame(height: screenHeight * 0.08)
+                        
                         Image("SwiftTaskLogo")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: geometry.size.width * 0.7)
+                            .frame(width: min(screenWidth * 0.7, 300))
                             .shadow(color: .customAccent.opacity(0.3), radius: 10)
                         
                         if showContent {
-                            welcomeTextSection
+                            welcomeTextSection(isSmallDevice: isSmallDevice)
                                 .transition(.scale.combined(with: .opacity))
                         }
                     }
-                    .padding(.top, geometry.size.height * 0.1)
                     
                     Spacer()
                     
                     if showContent {
                         actionButtonsSection
                             .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .padding(.bottom, isSmallDevice ? 20 : 40)
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 40)
             }
         }
     }
@@ -143,17 +149,21 @@ struct StartScreenView: View {
     // MARK: - View Components
     
     /// Welcome text section with title and description
-    private var welcomeTextSection: some View {
-        VStack(spacing: 16) {
+    private func welcomeTextSection(isSmallDevice: Bool) -> some View {
+        VStack(spacing: isSmallDevice ? 8 : 16) {
             Text("Welcome to SwiftTask")
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: isSmallDevice ? 24 : 28, weight: .bold))
                 .foregroundColor(.white)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
             
             Text("Your personal task management solution for enhanced productivity and organization")
-                .font(.system(size: 16, weight: .regular))
+                .font(.system(size: isSmallDevice ? 14 : 16, weight: .regular))
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .minimumScaleFactor(0.8)
+                .lineLimit(2)
         }
     }
     
@@ -171,7 +181,7 @@ struct StartScreenView: View {
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                .frame(height: 52)
                 .foregroundStyle(.white)
                 .background(Color.customGradient)
                 .cornerRadius(15)
@@ -185,7 +195,7 @@ struct StartScreenView: View {
                 Text("Continue as Guest")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
+                    .frame(height: 52)
                     .foregroundColor(.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 15)
