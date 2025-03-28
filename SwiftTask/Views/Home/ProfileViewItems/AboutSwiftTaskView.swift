@@ -99,19 +99,31 @@ struct AboutSwiftTaskView: View {
                             .foregroundStyle(themeManager.currentTheme.text)
                         
                         VStack(spacing: 16) {
-                            LinkButton(
-                                icon: "envelope.fill",
-                                title: "Email",
-                                subtitle: "support@swifttask.com",
-                                theme: themeManager.currentTheme
-                            )
+                            Button(action: {
+                                if let url = URL(string: "mailto:swifttask@icloud.com") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                LinkButton(
+                                    icon: "envelope.fill",
+                                    title: "Email",
+                                    subtitle: "swifttask@icloud.com",
+                                    theme: themeManager.currentTheme
+                                )
+                            }
                             
-                            LinkButton(
-                                icon: "globe",
-                                title: "Website",
-                                subtitle: "www.swifttask.com",
-                                theme: themeManager.currentTheme
-                            )
+                            Button(action: {
+                                if let url = URL(string: "https://studio.iss.az") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                LinkButton(
+                                    icon: "globe",
+                                    title: "Website",
+                                    subtitle: "studio.iss.az",
+                                    theme: themeManager.currentTheme
+                                )
+                            }
                         }
                     }
                 }

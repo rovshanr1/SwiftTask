@@ -122,6 +122,15 @@ class HomeViewModel: ObservableObject {
         filteredItems.filter { $0.completed }
     }
     
+    // Tüm görevler için sayılar
+    var totalTasksLeft: Int {
+        newItems.count
+    }
+    
+    var totalTasksDone: Int {
+        completedTasks.count
+    }
+    
     init(context: NSManagedObjectContext) {
         self.context = context
         fetchItems()
@@ -205,9 +214,8 @@ class HomeViewModel: ObservableObject {
     private func updateTaskCounts() {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        _ = calendar.date(byAdding: .day, value: 1, to: today)!
         
-        // Bugünün görevlerini filtrele
+        // Filter today's tasks
         let todayTasks = items.filter { item in
             if let taskDate = item.date {
                 let taskDay = calendar.startOfDay(for: taskDate)
@@ -216,16 +224,16 @@ class HomeViewModel: ObservableObject {
             return false
         }
         
-        // Tamamlanan ve kalan görevleri say
+        // Count completed and remaining tasks for today
         taskDoneCount = todayTasks.filter { $0.completed }.count
         taskLeftCount = todayTasks.filter { !$0.completed }.count
         
-        // UI'ı güncelle
+        // Update UI
         DispatchQueue.main.async {
             self.objectWillChange.send()
         }
         
-        // Diğer görünümleri bilgilendir
+        // Notify other views
         NotificationCenter.default.post(
             name: .tasksUpdated,
             object: nil,
@@ -253,19 +261,19 @@ class HomeViewModel: ObservableObject {
         errorMessage = if let taskError = error as? TaskServiceError {
             switch taskError {
             case .userNotFound:
-                "Kullanıcı bulunamadı. Lütfen tekrar giriş yapın."
+                "User not found. Please login again."
             case .saveFailed:
-                "Görev kaydedilemedi."
+                "Failed to save task."
             case .updateFailed:
-                "Görev güncellenemedi."
+                "Failed to update task."
             case .deleteFailed:
-                "Görev silinemedi."
+                "Failed to delete task."
             case .invalidTaskId:
-                "Geçersiz görev tanımlayıcısı."
+                "Invalid task identifier."
             case .firebaseError(let error):
-                "Firebase hatası: \(error.localizedDescription)"
+                "Firebase error: \(error.localizedDescription)"
             case .coreDataError(let error):
-                "Veritabanı hatası: \(error.localizedDescription)"
+                "Database error: \(error.localizedDescription)"
             }
         } else {
             error.localizedDescription

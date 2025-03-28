@@ -127,10 +127,10 @@ struct ProfileView: View {
                     // Task Stats
                     HStack(spacing: 20) {
                         VStack {
-                            Text("\(homeViewModel.newItems.count)")
+                            Text("\(homeViewModel.totalTasksDone)")
                                 .font(.title2)
                                 .foregroundColor(themeManager.currentTheme.text)
-                            Text("Tasks Left")
+                            Text("Completed")
                                 .font(.caption)
                                 .foregroundColor(themeManager.currentTheme.secondaryText)
                         }
@@ -141,10 +141,10 @@ struct ProfileView: View {
                         .shadow(radius: 5)
                         
                         VStack {
-                            Text("\(homeViewModel.completedTasks.count)")
+                            Text("\(homeViewModel.totalTasksLeft)")
                                 .font(.title2)
                                 .foregroundColor(themeManager.currentTheme.text)
-                            Text("Tasks Done")
+                            Text("Remaining")
                                 .font(.caption)
                                 .foregroundColor(themeManager.currentTheme.secondaryText)
                         }
@@ -205,25 +205,6 @@ struct ProfileView: View {
                         .presentationBackground(themeManager.currentTheme.secondaryBackground)
                 }
                 
-                // Language
-                Button(action: {
-                    // TODO: Implement language settings
-                }) {
-                    HStack {
-                        Image(systemName: "globe")
-                            .foregroundStyle(themeManager.currentTheme.accent)
-                            .frame(width: 24, height: 24)
-                        Text("Language")
-                            .foregroundStyle(themeManager.currentTheme.text)
-                        Spacer()
-                        Text("English")
-                            .foregroundStyle(themeManager.currentTheme.secondaryText)
-                            .font(.system(size: 14))
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(themeManager.currentTheme.text)
-                    }
-                }
-                
                 // About App
                 Button(action: { showAboutView = true }) {
                     HStack {
@@ -251,7 +232,7 @@ struct ProfileView: View {
                         Image(systemName: "person.text.rectangle.fill")
                             .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
-                        Text("Change account name")
+                        Text("Change Username")
                             .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -269,7 +250,7 @@ struct ProfileView: View {
                         Image(systemName: "person.crop.circle.fill.badge.plus")
                             .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
-                        Text("Change account Image")
+                        Text("Change Profile Photo")
                             .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -287,7 +268,7 @@ struct ProfileView: View {
                         Image(systemName: "lock.fill")
                             .foregroundStyle(themeManager.currentTheme.accent)
                             .frame(width: 24, height: 24)
-                        Text("Change account password")
+                        Text("Change Password")
                             .foregroundStyle(themeManager.currentTheme.text)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -316,6 +297,103 @@ struct ProfileView: View {
             .listRowBackground(themeManager.currentTheme.background)
             
             Section(header: Text("SwiftTask").foregroundStyle(themeManager.currentTheme.secondaryText)) {
+                // Privacy Policy
+                Button(action: {
+                    if let url = URL(string: "https://studio.iss.az/privacy") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "hand.raised.fill")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(themeManager.currentTheme.accent)
+                        Text("Privacy Policy")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                    }
+                }
+                
+                // Terms & Conditions
+                Button(action: {
+                    if let url = URL(string: "https://studio.iss.az/terms") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "doc.text.fill")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(themeManager.currentTheme.accent)
+                        Text("Terms & Conditions")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                    }
+                }
+                
+                // Rate App
+                Button(action: {
+                    if let url = URL(string: "https://apps.apple.com/az/app/swifttask-todo/id6741823350") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "star.fill")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(themeManager.currentTheme.accent)
+                        Text("Rate App")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                    }
+                }
+                
+                // Share App
+                Button(action: {
+                    let appUrl = "https://apps.apple.com/az/app/swifttask-todo/id6741823350"
+                    let shareSheet = UIActivityViewController(
+                        activityItems: ["Check out SwiftTask - Your Personal Task Manager!", URL(string: appUrl)!],
+                        applicationActivities: nil
+                    )
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first,
+                       let rootVC = window.rootViewController {
+                        rootVC.present(shareSheet, animated: true)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(themeManager.currentTheme.accent)
+                        Text("Share App")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                    }
+                }
+                
+                // Support / Help Center
+                Button(action: {
+                    if let url = URL(string: "https://studio.iss.az/support") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "questionmark.circle.fill")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(themeManager.currentTheme.accent)
+                        Text("Help Center")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(themeManager.currentTheme.text)
+                    }
+                }
+
                 Button(action: {
                     viewModel.logout()
                     isLoggedOut = true
@@ -323,7 +401,10 @@ struct ProfileView: View {
                     HStack {
                         Image("logout")
                             .frame(width: 24, height: 24)
-                        Text("Logout")
+                        Text("Sign Out")
+                            .foregroundStyle(.red)
+                        Spacer()
+                        Image(systemName: "chevron.right")
                             .foregroundStyle(.red)
                     }
                 }
