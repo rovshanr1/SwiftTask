@@ -299,7 +299,7 @@ struct ProfileView: View {
             Section(header: Text("SwiftTask").foregroundStyle(themeManager.currentTheme.secondaryText)) {
                 // Privacy Policy
                 Button(action: {
-                    if let url = URL(string: "https://studio.iss.az/privacy") {
+                    if let url = URL(string: "https://studio.iss.az/az/swifttask/privacy/") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -317,7 +317,7 @@ struct ProfileView: View {
                 
                 // Terms & Conditions
                 Button(action: {
-                    if let url = URL(string: "https://studio.iss.az/terms") {
+                    if let url = URL(string: "https://studio.iss.az/az/swifttask/terms/") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -377,22 +377,22 @@ struct ProfileView: View {
                 }
                 
                 // Support / Help Center
-                Button(action: {
-                    if let url = URL(string: "https://studio.iss.az/support") {
-                        UIApplication.shared.open(url)
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "questionmark.circle.fill")
-                            .frame(width: 24, height: 24)
-                            .foregroundStyle(themeManager.currentTheme.accent)
-                        Text("Help Center")
-                            .foregroundStyle(themeManager.currentTheme.text)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(themeManager.currentTheme.text)
-                    }
-                }
+//                Button(action: {
+//                    if let url = URL(string: "https://studio.iss.az/support") {
+//                        UIApplication.shared.open(url)
+//                    }
+//                }) {
+//                    HStack {
+//                        Image(systemName: "questionmark.circle.fill")
+//                            .frame(width: 24, height: 24)
+//                            .foregroundStyle(themeManager.currentTheme.accent)
+//                        Text("Help Center")
+//                            .foregroundStyle(themeManager.currentTheme.text)
+//                        Spacer()
+//                        Image(systemName: "chevron.right")
+//                            .foregroundStyle(themeManager.currentTheme.text)
+//                    }
+//                }
 
                 Button(action: {
                     viewModel.logout()
